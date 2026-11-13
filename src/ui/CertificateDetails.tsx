@@ -1,4 +1,4 @@
-import { CalendarClock } from 'lucide-react';
+import { CalendarClock, TriangleAlert } from 'lucide-react';
 import { explanationFor } from '../content/explanations';
 import type { CertificateData, IssuanceHistory } from '../engine/checks/certificate';
 import { StatusBadge } from './status';
@@ -45,11 +45,26 @@ export function IssuanceHistoryView({ history }: { history: IssuanceHistory }) {
       ) : (
         <div className="issuance-chart">
           {history.issuers.map((group) => (
-            <div className="issuance-row" key={group.issuer}>
+            <div className={`issuance-row${group.caaMismatch ? ' issuance-row-flagged' : ''}`} key={group.issuer}>
               <p className="issuance-issuer">
-                <span>{group.issuer}</span>
+                <span>
+                  {group.issuer}
+                  {group.caaMismatch && (
+                    <span className="issuance-flag">
+                      <TriangleAlert aria-hidden="true" size={12} />
+                      Not in CAA
+                    </span>
+                  )}
+                </span>
                 <span className="issuance-count">{group.certificates.length}</span>
               </p>
+              {group.caaMismatch && (
+                <p className="issuance-flag-note">
+                  The CAA set at {group.caaMismatch.foundAt} allows {group.caaMismatch.allowed.join(', ')}, not{' '}
+                  {group.caaMismatch.caDomains[0]}. Either CAA changed since these certificates were issued, or the
+                  issuance was unexpected and worth a look.
+                </p>
+              )}
               <ul className="issuance-track" aria-label={`Certificates issued by ${group.issuer}`}>
                 {group.certificates.map((c) => {
                   const label = `Issued ${c.notBefore.slice(0, 10)}, expires ${c.notAfter.slice(0, 10)}`;

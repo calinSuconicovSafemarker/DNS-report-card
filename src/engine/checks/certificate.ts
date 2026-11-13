@@ -1,3 +1,4 @@
+import type { CaaMismatch } from '../caaMismatch';
 import type { Check, CheckResult, Detail } from '../types';
 
 /** The public Certificate Transparency services, in the order they are asked (ADR 0002). */
@@ -22,6 +23,11 @@ export interface IssuedCertificate {
 export interface IssuerGroup {
   issuer: string;
   certificates: IssuedCertificate[];
+  /**
+   * Set by the Report engine once the CAA Check has settled, when the current
+   * CAA set would not allow this issuer. Informational: it changes no Status or Grade.
+   */
+  caaMismatch?: CaaMismatch;
 }
 
 /**

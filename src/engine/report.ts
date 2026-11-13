@@ -1,3 +1,5 @@
+import { flagCaaMismatches } from './caaMismatch';
+import { isCertificateResult, type CertificateResult } from './checks/certificate';
 import { catalog, checks as registeredChecks } from './checks';
 import { createDnsClient, DnsUnreachableError } from './dns';
 import { gradeResults, type Grading } from './grade';
@@ -40,7 +42,11 @@ export type ReportEvent =
    * `check` event follows for each Check that is `built`.
    */
   | { type: 'started'; hostname: string; checks: ReportCheck[] }
-  /** One Check settled. */
+  /**
+   * One Check settled. The Certificate result can come a second time, replacing
+   * the first, when the CAA Check settles after it and flags issuers in its
+   * Issuance history (see `caaMismatch.ts`).
+   */
   | { type: 'check'; result: CheckResult }
   /** Every Check settled. `grading` is null when no Check could be graded. */
   | { type: 'graded'; grading: Grading | null };
@@ -102,11 +108,25 @@ export async function* runReport(target: string, options: ReportOptions): AsyncG
     ]),
   );
   const settled: { result: CheckResult; weight: number }[] = [];
+  let caa: CheckResult | undefined;
+  let certificate: CertificateResult | undefined;
   while (pending.size > 0) {
     const { i, result } = await Promise.race(pending.values());
     pending.delete(i);
     settled.push({ result, weight: weightOf(checks[i].id) });
+    if (isCertificateResult(result)) {
+      certificate = caa ? flagCaaMismatches(result, caa) : result;
+      yield { type: 'check', result: certificate };
+      continue;
+    }
     yield { type: 'check', result };
+    if (result.check === 'caa') {
+      caa = result;
+      if (certificate) {
+        const flagged = flagCaaMismatches(certificate, caa);
+        if (flagged.certificate.history.issuers.some((g) => g.caaMismatch)) yield { type: 'check', result: flagged };
+      }
+    }
   }
 
   yield { type: 'graded', grading: gradeResults(settled, catalog.length) };
@@ -167,9 +187,13 @@ export async function collectReport(target: string, options: ReportOptions): Pro
       case 'started':
         hostname = event.hostname;
         break;
-      case 'check':
-        results.push(event.result);
+      case 'check': {
+        // A later result for the same Check replaces the earlier one.
+        const at = results.findIndex((r) => r.check === event.result.check);
+        if (at >= 0) results[at] = event.result;
+        else results.push(event.result);
         break;
+      }
       case 'graded':
         return { kind: 'report', hostname, results, grading: event.grading };
     }
