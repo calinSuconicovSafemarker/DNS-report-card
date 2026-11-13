@@ -1,0 +1,1 @@
+{"Status":0,"TC":false,"RD":true,"RA":true,"AD":true,"CD":false,"Question":[{"name":"ns5.cloudflare.com.","type":1}],"Answer":[{"name":"ns5.cloudflare.com.","type":1,"TTL":21600,"data":"162.159.9.55"},{"name":"ns5.cloudflare.com.","type":1,"TTL":21600,"data":"162.159.2.9"}],"Comment":"Response from 162.159.1.33."}

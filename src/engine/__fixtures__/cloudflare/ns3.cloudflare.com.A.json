@@ -1,0 +1,1 @@
+{"Status":0,"TC":false,"RD":true,"RA":true,"AD":true,"CD":false,"Question":[{"name":"ns3.cloudflare.com","type":1}],"Answer":[{"name":"ns3.cloudflare.com","type":1,"TTL":86353,"data":"162.159.0.33"},{"name":"ns3.cloudflare.com","type":1,"TTL":86353,"data":"162.159.7.226"}]}

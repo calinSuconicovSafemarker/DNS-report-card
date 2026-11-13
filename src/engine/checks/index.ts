@@ -1,6 +1,7 @@
 import type { Check, CheckId } from '../types';
 import { hstsPreloadCheck } from './hstsPreload';
 import { httpsRecordCheck } from './httpsRecord';
+import { nameserversCheck } from './nameservers';
 
 export interface CheckInfo {
   id: CheckId;
@@ -36,4 +37,4 @@ export const catalog: readonly CheckInfo[] = [
  * `../names.ts`). A Check that reads records on the Hostname sets
  * `readsHostnameRecords: true` so the engine adds the Alias note to its card.
  */
-export const checks: readonly Check[] = [httpsRecordCheck, hstsPreloadCheck];
+export const checks: readonly Check[] = [httpsRecordCheck, hstsPreloadCheck, nameserversCheck];

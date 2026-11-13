@@ -63,6 +63,26 @@ const explanations: Partial<Record<CheckId, CheckCopy>> = {
       link: { label: 'Submit your domain at hstspreload.org', href: 'https://hstspreload.org/' },
     },
   },
+  nameservers: {
+    pass: {
+      whatThisMeans:
+        'Your domain has at least two nameservers, run by more than one provider and sitting in more than one network. If one provider has an outage or one network becomes unreachable, the others keep answering, so your domain stays reachable.',
+    },
+    warning: {
+      whatThisMeans:
+        'Your domain has more than one nameserver, but they all belong to one provider or all sit in the same /24 network. That is a single point of failure: one provider outage, one misconfiguration or one network problem can take every nameserver down at once, and your domain then disappears from the internet.',
+      howToFix:
+        'Add nameservers from a second, independent DNS provider (or on a different network) and keep both providers serving the same records. Many DNS providers support this as "secondary DNS", copying your zone automatically. Then list the nameservers from both providers at your registrar.',
+      example: 'example.com. 86400 IN NS ns1.provider-one.example.\nexample.com. 86400 IN NS ns1.provider-two.example.',
+    },
+    fail: {
+      whatThisMeans:
+        'Your domain has fewer than two nameservers. If that one server goes down or becomes unreachable, nobody can look up your domain: your website, email and everything else on it stop working.',
+      howToFix:
+        'Add at least one more nameserver, ideally from a different provider and on a different network, and serve the same records from it. Then list all your nameservers at your registrar, so the delegation matches.',
+      example: 'example.com. 86400 IN NS ns1.provider-one.example.\nexample.com. 86400 IN NS ns1.provider-two.example.',
+    },
+  },
 };
 
 export function explanationFor(check: CheckId, status: Status): Explanation | undefined {
