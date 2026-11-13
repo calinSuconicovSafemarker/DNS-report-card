@@ -52,9 +52,9 @@ describe('DNSSEC Check', () => {
     });
   });
 
-  it('warns (not fails) when the Zone apex has no DNSSEC, and is evaluated on the Zone apex', async () => {
+  it('is Info (no points either way) when the Zone apex has no DNSSEC, and is evaluated on the Zone apex', async () => {
     const dnssec = await dnssecResult('www.github.com');
-    expect(dnssec).toMatchObject({ status: 'warning', reason: 'none', verdict: 'DNSSEC is not enabled', checkedName: 'github.com' });
+    expect(dnssec).toMatchObject({ status: 'info', reason: 'none', verdict: 'DNSSEC is not enabled (optional)', checkedName: 'github.com' });
     expect(dnssec.details).toEqual([
       { label: 'DS', value: 'None found' },
       { label: 'DNSKEY', value: 'None found' },

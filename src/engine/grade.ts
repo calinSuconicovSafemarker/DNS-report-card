@@ -6,7 +6,7 @@ export interface Grading {
   /** 0-100, rounded for display. The Grade comes from the unrounded Score. */
   score: number;
   grade: Grade;
-  /** Number of Check results that counted toward the Score. */
+  /** Number of Checks that got an answer (everything except Couldn't check). Info results count as checked but carry no points. */
   gradedCount: number;
   /** Number of Checks in the Report (always six); "Based on gradedCount of totalCount checks". */
   totalCount: number;
@@ -27,11 +27,11 @@ export function gradeResults(
   let possible = 0;
   let gradedCount = 0;
   for (const { result, weight } of results) {
+    if (result.status !== 'couldnt-check') gradedCount++;
     const points = POINTS[result.status];
     if (points === undefined) continue;
     earned += points * weight;
     possible += weight;
-    gradedCount++;
   }
   if (possible === 0) return null;
   const exact = (earned / possible) * 100;

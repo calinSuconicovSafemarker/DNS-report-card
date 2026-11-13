@@ -314,6 +314,7 @@ describe('Grade', () => {
 
   it("leaves Couldn't check and Info out and rescales the remaining weights", async () => {
     // Graded: DNSSEC pass 25, Nameservers fail 20, CAA warning 7.5 of 15 -> 32.5 / 60 = 54.
+    // Info carries no points but still counts as checked; only Couldn't check lowers "Based on N of 6".
     expect(
       await graded(
         fixed('dnssec', 'pass'),
@@ -323,7 +324,7 @@ describe('Grade', () => {
         broken('certificate'),
         fixed('hsts-preload', 'couldnt-check'),
       ),
-    ).toEqual({ score: 54, grade: 'D', gradedCount: 3, totalCount: 6 });
+    ).toEqual({ score: 54, grade: 'D', gradedCount: 4, totalCount: 6 });
   });
 
   it("is absent when no Check could be graded", async () => {

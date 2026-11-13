@@ -53,7 +53,7 @@ DNS Report Card is a free, static website. The user types a domain or URL and ge
 26. As a domain owner, I want to know whether my Zone apex is DNSSEC-signed and validated (DS at the parent, DNSKEY present, resolver reports validated), so that I know whether my DNS answers can be forged.
 27. As a domain owner who published DNSKEY but no DS, I want a Warning explaining that the setup is only half done and that I need to add the DS record at my registrar, so that I can finish it.
 28. As a domain owner whose DNSSEC is broken (answers fail validation but resolve with checking disabled), I want a Fail that explains my domain may be unreachable for validating resolvers, so that I treat it as urgent.
-29. As a domain owner with no DNSSEC, I want a Warning (not a Fail, since many large sites skip it) with steps to enable it at my DNS provider and registrar, so that I know where to start.
+29. As a domain owner with no DNSSEC, I want an Info card that costs no points (many large sites skip it) with optional steps to enable it at my DNS provider and registrar, so that I know where to start.
 
 ### CAA
 30. As a domain owner, I want to see which certificate authorities are allowed to issue certificates for my Hostname (found by walking up the tree), so that I know who can issue for me.
@@ -107,7 +107,7 @@ DNS Report Card is a free, static website. The user types a domain or URL and ge
   - **Six Check modules** (DNSSEC, CAA, Nameservers, HTTPS record, Certificate, HSTS preload). Each turns lookups into a Check result: Status, verdict, which name was checked, details, and an optional Alias note.
   - **Certificate source**: Cert Spotter issuances API first (keyless; exact-domain query; pages with `after=` because the Link header isn't exposed to the browser; issuances come oldest first, so it reads to the last page, up to 10 pages, and a listing cut off by that cap is treated as no answer (falling back to crt.sh) rather than judged; expired certificates filtered on the client for the "latest" view), timeout 8 s. crt.sh JSON as the fallback, timeout 20 s. crt.sh returns 502 responses without CORS headers, which the browser surfaces as a generic network error; treat that as no answer (ADR 0002).
   - **Preload list source**: Chromium's `transport_security_state_static.json` via jsDelivr. The file starts with `//` comment lines, which must be stripped before JSON parsing. Timeout 10 s; the browser's HTTP cache handles repeat visits. The hstspreload.org API must not be used: it works on localhost but is blocked once deployed (ADR 0002).
-  - **Grading**: Pass = 1, Warning = 0.5, Fail = 0. Weights: DNSSEC 25, Nameservers 20, Certificate 20, CAA 15, HTTPS record 10, HSTS preload 10. Couldn't check and Info results are excluded and the remaining weights are rescaled. Score 0–100, rounded only for display; the Grade thresholds apply to the unrounded Score: A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, otherwise F. No single Fail caps the Grade.
+  - **Grading**: Pass = 1, Warning = 0.5, Fail = 0. Weights: DNSSEC 25, Nameservers 20, Certificate 20, CAA 15, HTTPS record 10, HSTS preload 10. Couldn't check and Info results are excluded and the remaining weights are rescaled (only Couldn't check lowers "Based on N of 6"). Score 0–100, rounded only for display; the Grade thresholds apply to the unrounded Score: A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, otherwise F. No single Fail caps the Grade.
   - **Report engine**: the single seam. Input: a Target plus an injected `fetch`. Output: the Report, delivered progressively (each Check result as it settles, then Score and Grade), or a Report-level outcome (invalid Target, NXDOMAIN, DNS unreachable). All Checks start in parallel.
   - **Explanation copy**: a content module holding the "What this means" and "How to fix" text for each Check × Status, kept separate from the Check logic. Fixes are generic and never assume a particular DNS provider.
   - **UI**: search bar, Grade ring, a 3×2 card grid, expandable cards with skeletons, light/dark themes, responsive layout. Plain CSS with design tokens and no component library; icons from `lucide-react`. Reads and writes the `?d=` query parameter. No storage and no analytics.
@@ -115,7 +115,7 @@ DNS Report Card is a free, static website. The user types a domain or URL and ge
 
 | Check | Pass | Warning | Fail |
 |---|---|---|---|
-| DNSSEC (Zone apex) | DS at parent + DNSKEY + resolver reports validated | No DNSSEC at all (common on large sites, so not a Fail); DNSKEY but no DS; or DS + DNSKEY but the resolver doesn't report the answer as validated (`not-validated`) | Broken (SERVFAIL normally, resolves with checking disabled) |
+| DNSSEC (Zone apex) | DS at parent + DNSKEY + resolver reports validated | DNSKEY but no DS; or DS + DNSKEY but the resolver doesn't report the answer as validated (`not-validated`) | Broken (SERVFAIL normally, resolves with checking disabled) | No DNSSEC at all → Info: no points either way, since many large sites skip it.
 | CAA (tree walk from Hostname) | CAA set with ≥1 `issue`/`issuewild` | — | No CAA anywhere up the tree, or a CAA set that names no certificate authority (e.g. `iodef` only), each with its own copy |
 | Nameservers (Zone apex) | ≥2 NS, ≥2 provider domains, ≥2 /24 networks | ≥2 NS but one provider or one /24 | <2 NS |
 | HTTPS record (Hostname) | Record present | Absent | — |
