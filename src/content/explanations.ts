@@ -36,6 +36,25 @@ export const checkSummary: Record<CheckId, string> = {
 
 /** Add an entry here when you build a Check. */
 const explanations: Partial<Record<CheckId, CheckCopy>> = {
+  dnssec: {
+    pass: {
+      whatThisMeans:
+        'Your Zone apex is signed with DNSSEC: the parent zone publishes a DS record for it, your zone publishes its DNSKEY, and resolvers report your answers as validated. Nobody can forge DNS answers for your domain to send visitors elsewhere.',
+    },
+    warning: {
+      whatThisMeans:
+        'Your Zone apex publishes DNSSEC keys (DNSKEY), but the parent zone has no DS record for them. DNSSEC is only half set up: resolvers can’t link your keys to the chain of trust, so they treat your domain as unsigned and your answers can still be forged.',
+      howToFix:
+        'Copy the DS record (or the key details) from your DNS provider’s DNSSEC settings and add it at your registrar, where you bought the domain. If your DNS provider is also your registrar, this is often a single “enable DNSSEC” switch.',
+      example: 'example.com. 3600 IN DS 2371 13 2 32996839a6d808afe3eb4a795a0e6a7a39a76fc52ff228b22b76f6d63826f2b9',
+    },
+    fail: {
+      whatThisMeans:
+        'Your Zone apex does not use DNSSEC. DNS answers for your domain are not signed, so an attacker who can tamper with DNS traffic or poison a resolver’s cache could send your visitors to a different server without anyone noticing.',
+      howToFix:
+        'First, turn on DNSSEC at your DNS provider (where your DNS records are managed); it will sign your zone and show you a DS record. Then add that DS record at your registrar (where you bought the domain). Many providers do both for you when they are also your registrar. Check again after an hour or so.',
+    },
+  },
   'https-record': {
     pass: {
       whatThisMeans:
@@ -65,6 +84,28 @@ const explanations: Partial<Record<CheckId, CheckCopy>> = {
   },
 };
 
-export function explanationFor(check: CheckId, status: Status): Explanation | undefined {
-  return explanations[check]?.[status] ?? (status === 'couldnt-check' ? couldntCheck : undefined);
+/**
+ * Copy for a Check result's `reason`, for a Status that covers several cases
+ * (e.g. DNSSEC Fail: broken vs not enabled). Takes precedence over the Status copy.
+ */
+const reasonExplanations: Partial<Record<CheckId, Record<string, Explanation>>> = {
+  dnssec: {
+    'not-validated': {
+      whatThisMeans:
+        'Your Zone apex is signed and the parent zone has a DS record for it, but resolvers did not report your answers as validated. This usually means the signing algorithm or DS digest type is one resolvers don’t support, so they treat your domain as unsigned and your answers get no protection.',
+      howToFix:
+        'In your DNS provider’s DNSSEC settings, re-sign the zone with a widely supported algorithm such as ECDSA P-256 (algorithm 13). Then replace the DS record at your registrar with the new one your DNS provider shows, using digest type 2 (SHA-256).',
+    },
+    broken: {
+      whatThisMeans:
+        'DNSSEC on your Zone apex is broken: your answers fail validation. Resolvers that check DNSSEC, including Google Public DNS, Cloudflare 1.1.1.1 and many ISPs, refuse to answer for your domain, so for a large share of visitors your website and email may be unreachable. This is urgent.',
+      howToFix:
+        'Usually the DS record at your registrar no longer matches the keys your DNS provider signs with, often after a provider change or a key rollover. Compare the DS record listed in the details with the one your DNS provider shows and replace it at your registrar. If you can’t fix it quickly, remove the DS record at your registrar to turn DNSSEC off until you can; changes take effect as the old DS record expires from caches.',
+    },
+  },
+};
+
+export function explanationFor(check: CheckId, status: Status, reason?: string): Explanation | undefined {
+  const forReason = reason === undefined ? undefined : reasonExplanations[check]?.[reason];
+  return forReason ?? explanations[check]?.[status] ?? (status === 'couldnt-check' ? couldntCheck : undefined);
 }

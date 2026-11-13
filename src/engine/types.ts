@@ -21,6 +21,8 @@ export interface CheckResult {
   checkedName: string;
   /** Raw data for technical users. */
   details: Detail[];
+  /** Which case of the Status this is, when a Check has several (e.g. DNSSEC `broken` vs `none`). Selects the explanation copy. */
+  reason?: string;
   /** Set by the Report engine when the Check read records on an Alias Hostname. */
   aliasNote?: string;
 }

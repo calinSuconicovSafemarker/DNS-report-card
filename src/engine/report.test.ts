@@ -348,7 +348,7 @@ describe('Report events', () => {
       type: 'started',
       hostname: 'cloudflare.com',
       checks: [
-        { id: 'dnssec', title: 'DNSSEC', weight: 25, built: false },
+        { id: 'dnssec', title: 'DNSSEC', weight: 25, built: true },
         { id: 'caa', title: 'CAA', weight: 15, built: false },
         { id: 'nameservers', title: 'Nameservers', weight: 20, built: false },
         { id: 'https-record', title: 'HTTPS record', weight: 10, built: true },
