@@ -41,6 +41,10 @@ One of Pass, Warning, Fail, Couldn't check, or Info.
 The Status when the service a Check depends on did not answer (blocked, error, or timeout); it is not a judgement about the Target and never counts toward the Grade.
 _Avoid_: Error, unknown, failed
 
+**Verdict**:
+The one-line summary of a Check result shown on its card, e.g. "Signed and validated".
+_Avoid_: Title, headline
+
 **Info**:
 A Status for data shown for context that is never graded.
 
@@ -57,8 +61,18 @@ _Avoid_: Rating, rank
 The most recent certificate for the Hostname recorded in Certificate Transparency logs; it is not necessarily the certificate the site currently serves.
 _Avoid_: Site certificate, current certificate
 
+**CAA set**:
+The CAA policy that applies to the Hostname: the CAA records at the first name found when walking up the tree from the Hostname.
+_Avoid_: CAA record (for the policy as a whole)
+
 **Issuance history**:
 The timeline of certificates issued for the Hostname over the last 12 months.
+
+## DNS
+
+**DNS provider**:
+The organisation running a nameserver, judged by its provider domain (e.g. `awsdns-21.co.uk`).
+_Avoid_: Host, registrar
 
 ## HSTS
 

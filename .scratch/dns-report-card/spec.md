@@ -105,9 +105,9 @@ DNS Report Card is a free, static website. The user types a domain or URL and ge
   - **DNS client**: DNS-over-HTTPS JSON queries. Cloudflare first (requires `Accept: application/dns-json`), falling back to Google per query. Google requests must be simple GETs with no custom headers, because its CORS preflight lacks CORS headers. Supports the checking-disabled flag. Normalizes provider differences: trailing dots, hex case, the shape of the error comment field. Records are returned in presentation form (e.g. CAA `0 issue "pki.goog"`). Timeout is 4 s per provider.
   - **Name resolution helpers**: finding the Zone apex by walking up with SOA queries; walking up the tree for CAA (RFC 8659); detecting an Alias from a CNAME in the answer; deriving the Registrable domain.
   - **Six Check modules** (DNSSEC, CAA, Nameservers, HTTPS record, Certificate, HSTS preload). Each turns lookups into a Check result: Status, verdict, which name was checked, details, and an optional Alias note.
-  - **Certificate source**: Cert Spotter issuances API first (keyless; exact-domain query; pages with `after=` because the Link header isn't exposed to the browser; up to about 3 pages; expired certificates filtered on the client for the "latest" view), timeout 8 s. crt.sh JSON as the fallback, timeout 20 s. crt.sh returns 502 responses without CORS headers, which the browser surfaces as a generic network error; treat that as no answer (ADR 0002).
+  - **Certificate source**: Cert Spotter issuances API first (keyless; exact-domain query; pages with `after=` because the Link header isn't exposed to the browser; issuances come oldest first, so it reads to the last page, up to 10 pages, and a listing cut off by that cap is treated as no answer (falling back to crt.sh) rather than judged; expired certificates filtered on the client for the "latest" view), timeout 8 s. crt.sh JSON as the fallback, timeout 20 s. crt.sh returns 502 responses without CORS headers, which the browser surfaces as a generic network error; treat that as no answer (ADR 0002).
   - **Preload list source**: Chromium's `transport_security_state_static.json` via jsDelivr. The file starts with `//` comment lines, which must be stripped before JSON parsing. Timeout 10 s; the browser's HTTP cache handles repeat visits. The hstspreload.org API must not be used: it works on localhost but is blocked once deployed (ADR 0002).
-  - **Grading**: Pass = 1, Warning = 0.5, Fail = 0. Weights: DNSSEC 25, Nameservers 20, Certificate 20, CAA 15, HTTPS record 10, HSTS preload 10. Couldn't check and Info results are excluded and the remaining weights are rescaled. Score 0–100; A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, otherwise F. No single Fail caps the Grade.
+  - **Grading**: Pass = 1, Warning = 0.5, Fail = 0. Weights: DNSSEC 25, Nameservers 20, Certificate 20, CAA 15, HTTPS record 10, HSTS preload 10. Couldn't check and Info results are excluded and the remaining weights are rescaled. Score 0–100, rounded only for display; the Grade thresholds apply to the unrounded Score: A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, otherwise F. No single Fail caps the Grade.
   - **Report engine**: the single seam. Input: a Target plus an injected `fetch`. Output: the Report, delivered progressively (each Check result as it settles, then Score and Grade), or a Report-level outcome (invalid Target, NXDOMAIN, DNS unreachable). All Checks start in parallel.
   - **Explanation copy**: a content module holding the "What this means" and "How to fix" text for each Check × Status, kept separate from the Check logic. Fixes are generic and never assume a particular DNS provider.
   - **UI**: search bar, Grade ring, a 3×2 card grid, expandable cards with skeletons, light/dark themes, responsive layout. Plain CSS with design tokens and no component library; icons from `lucide-react`. Reads and writes the `?d=` query parameter. No storage and no analytics.
@@ -115,14 +115,21 @@ DNS Report Card is a free, static website. The user types a domain or URL and ge
 
 | Check | Pass | Warning | Fail |
 |---|---|---|---|
-| DNSSEC (Zone apex) | DS at parent + DNSKEY + resolver reports validated | DNSKEY but no DS | None, or broken (SERVFAIL normally, resolves with checking disabled) |
-| CAA (tree walk from Hostname) | CAA set with ≥1 `issue`/`issuewild` | — | No CAA anywhere up the tree |
+| DNSSEC (Zone apex) | DS at parent + DNSKEY + resolver reports validated | DNSKEY but no DS; or DS + DNSKEY but the resolver doesn't report the answer as validated (`not-validated`) | None, or broken (SERVFAIL normally, resolves with checking disabled) |
+| CAA (tree walk from Hostname) | CAA set with ≥1 `issue`/`issuewild` | — | No CAA anywhere up the tree, or a CAA set that names no certificate authority (e.g. `iodef` only), each with its own copy |
 | Nameservers (Zone apex) | ≥2 NS, ≥2 provider domains, ≥2 /24 networks | ≥2 NS but one provider or one /24 | <2 NS |
 | HTTPS record (Hostname) | Record present | Absent | — |
 | Certificate (Hostname) | Latest issued certificate >21 days left | ≤21 days left | Expired, or none found |
 | HSTS preload (Hostname or parent with include-subdomains) | On the Preload list | Not on it | — |
 
-  Any check whose service doesn't answer → Couldn't check. The Issuance history is shown as Info.
+  Any check whose service doesn't answer → Couldn't check. A DNS answer with an error RCODE other than NXDOMAIN (e.g. SERVFAIL) is also Couldn't check, never "no records" (the DNSSEC broken-detection path is the exception, by design). The Issuance history is shown as Info.
+
+- **Settled additions** (added during implementation, kept after code review):
+  - The DNSSEC `not-validated` Warning: DS and DNSKEY are present, but the resolver doesn't set the AD flag.
+  - The Scorecard panel: an at-a-glance list of the six Checks with their weight and current Status.
+  - The Grade summary sentence under the Hostname (e.g. "Excellent. This domain follows good practice.").
+  - The "Try again" button on the DNS-unreachable page.
+  - A 60 s per-Check safety timeout in the Report engine: a Check that hasn't settled by then becomes Couldn't check, so no card spins forever.
 
 ## Testing Decisions
 
