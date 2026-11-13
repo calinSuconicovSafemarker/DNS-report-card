@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { collectReport } from './report';
-import { explanationFor } from '../content/explanations';
-import { caaPolicyOf } from './checks/caa';
-import { fakeFetch, type FakeFetchOptions } from './__fixtures__/fakeFetch';
+import { collectReport } from '../report';
+import { explanationFor } from '../../content/explanations';
+import { caaPolicyOf } from './caa';
+import { fakeFetch, type FakeFetchOptions } from '../__fixtures__/fakeFetch';
 
 async function caaResult(target: string, options: FakeFetchOptions = {}) {
   const r = await collectReport(target, { fetch: fakeFetch(options) });

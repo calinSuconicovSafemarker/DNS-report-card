@@ -152,11 +152,11 @@ function judge(hostname: string, source: CertificateSource, all: IssuedCertifica
   ];
   if (expired) {
     const when = daysLeft === 0 ? 'today' : `${plural(-daysLeft, 'day')} ago`;
-    return { ...base, status: 'fail', verdict: `Latest certificate expired ${when}`, details };
+    return { ...base, status: 'fail', verdict: `Latest issued certificate expired ${when}`, details };
   }
   const status = daysLeft > WARNING_DAYS ? 'pass' : 'warning';
   const when = daysLeft === 0 ? 'today' : `in ${plural(daysLeft, 'day')}`;
-  return { ...base, status, verdict: `Latest certificate expires ${when}`, details };
+  return { ...base, status, verdict: `Latest issued certificate expires ${when}`, details };
 }
 
 function issuanceHistory(byIssuance: IssuedCertificate[], now: Date): IssuanceHistory {

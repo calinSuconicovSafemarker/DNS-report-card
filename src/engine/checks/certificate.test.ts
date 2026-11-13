@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createCertificateCheck, isCertificateResult, type CertificateCheckOptions } from './checks/certificate';
-import { collectReport } from './report';
-import { fakeFetch, type FakeFetchOptions } from './__fixtures__/fakeFetch';
+import { createCertificateCheck, isCertificateResult, type CertificateCheckOptions } from './certificate';
+import { collectReport } from '../report';
+import { fakeFetch, type FakeFetchOptions } from '../__fixtures__/fakeFetch';
 
 const TODAY = new Date('2026-11-13T12:00:00Z');
 
@@ -36,7 +36,7 @@ describe('Certificate Check', () => {
     const result = await certificateResult('github.com', { fetch: spy });
 
     expect(result).toMatchObject({ status: 'pass', checkedName: 'github.com' });
-    expect(result.verdict).toBe('Latest certificate expires in 75 days');
+    expect(result.verdict).toBe('Latest issued certificate expires in 75 days');
     expect(result.details).toContainEqual({ label: 'Source', value: 'Cert Spotter' });
     expect(result.details).toContainEqual({ label: 'Issuer', value: 'Sectigo' });
     expect(result.details).toContainEqual({ label: 'Valid until', value: '2027-01-27 23:59 UTC' });
@@ -78,7 +78,7 @@ describe('Certificate Check', () => {
   it('falls back to crt.sh when Cert Spotter does not answer, and names crt.sh as the source', async () => {
     const result = await certificateResult('crypto.cloudflare.com', { fake: { down: ['certspotter'] } });
 
-    expect(result).toMatchObject({ status: 'pass', verdict: 'Latest certificate expires in 54 days' });
+    expect(result).toMatchObject({ status: 'pass', verdict: 'Latest issued certificate expires in 54 days' });
     expect(result.details).toContainEqual({ label: 'Source', value: 'crt.sh' });
     expect(result.details).toContainEqual({ label: 'Issuer', value: "Let's Encrypt" });
     if (!isCertificateResult(result)) throw new Error('expected certificate data');
@@ -143,17 +143,17 @@ describe('Certificate Check', () => {
 
   it('warns when the Latest issued certificate has 21 days or fewer left', async () => {
     const result = await certificateResult('github.com', { today: new Date('2027-01-06T23:59:59Z') });
-    expect(result).toMatchObject({ status: 'warning', verdict: 'Latest certificate expires in 21 days' });
+    expect(result).toMatchObject({ status: 'warning', verdict: 'Latest issued certificate expires in 21 days' });
   });
 
   it('passes with 22 days left', async () => {
     const result = await certificateResult('github.com', { today: new Date('2027-01-05T23:59:59Z') });
-    expect(result).toMatchObject({ status: 'pass', verdict: 'Latest certificate expires in 22 days' });
+    expect(result).toMatchObject({ status: 'pass', verdict: 'Latest issued certificate expires in 22 days' });
   });
 
   it('fails when the Latest issued certificate has expired', async () => {
     const result = await certificateResult('github.com', { today: new Date('2027-02-01T00:00:00Z') });
-    expect(result).toMatchObject({ status: 'fail', verdict: 'Latest certificate expired 4 days ago' });
+    expect(result).toMatchObject({ status: 'fail', verdict: 'Latest issued certificate expired 4 days ago' });
     if (!isCertificateResult(result)) throw new Error('expected certificate data');
     expect(result.certificate.latest?.notAfter).toBe('2027-01-27T23:59:59.000Z');
   });

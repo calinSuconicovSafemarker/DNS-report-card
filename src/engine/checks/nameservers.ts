@@ -2,8 +2,9 @@ import { recordsOf } from '../dns';
 import type { Check, CheckResult, Detail } from '../types';
 
 interface Nameserver {
-  hostname: string;
-  /** Registrable domain of the nameserver hostname, used as the provider. */
+  /** The nameserver's own name, e.g. `ns1.example.net`. */
+  nsName: string;
+  /** Provider domain of the nameserver name: the DNS provider running it. */
   provider: string;
   ipv4: string[];
 }
@@ -16,15 +17,15 @@ export const nameserversCheck: Check = {
   id: 'nameservers',
   async run({ dns, zoneApex }): Promise<CheckResult> {
     const apex = await zoneApex();
-    const hostnames = unique(recordsOf(await dns.query(apex, 'NS'), 'NS').map((r) => r.data)).sort();
+    const nsNames = unique(recordsOf(await dns.query(apex, 'NS'), 'NS').map((r) => r.data)).sort();
 
     const nameservers: Nameserver[] = await Promise.all(
-      hostnames.map(async (hostname) => {
-        const a = recordsOf(await dns.query(hostname, 'A'), 'A');
+      nsNames.map(async (nsName) => {
+        const a = recordsOf(await dns.query(nsName, 'A'), 'A');
         return {
-          hostname,
-          provider: registrableDomain(hostname),
-          ipv4: a.filter((r) => r.name === hostname).map((r) => r.data).sort(byAddress),
+          nsName,
+          provider: providerDomain(nsName),
+          ipv4: a.filter((r) => r.name === nsName).map((r) => r.data).sort(byAddress),
         };
       }),
     );
@@ -34,7 +35,7 @@ export const nameserversCheck: Check = {
 
     const details: Detail[] = [
       ...nameservers.map((ns) => ({
-        label: ns.hostname,
+        label: ns.nsName,
         value: [ns.provider, ...ns.ipv4.map((ip) => `${ip} (${network24(ip)})`)].join(' · '),
       })),
       { label: 'Provider domains', value: providers.join(', ') || 'None' },
@@ -68,12 +69,12 @@ export const nameserversCheck: Check = {
 const COUNTRY_SECOND_LEVELS = new Set(['ac', 'co', 'com', 'edu', 'gov', 'net', 'org', 'ne', 'or', 'go', 'gv', 'ltd', 'plc']);
 
 /**
- * The registrable domain of a hostname: its last two labels, or three under a
- * country-code second level such as `co.uk`. An approximation of the Public
- * Suffix List, good enough to tell DNS providers apart.
+ * The provider domain of a nameserver name: its last two labels, or three
+ * under a country-code second level such as `co.uk`. An approximation of the
+ * Public Suffix List, good enough to tell DNS providers apart.
  */
-function registrableDomain(hostname: string): string {
-  const labels = hostname.split('.');
+function providerDomain(nsName: string): string {
+  const labels = nsName.split('.');
   const tld = labels.at(-1) ?? '';
   const second = labels.at(-2) ?? '';
   const keep = tld.length === 2 && COUNTRY_SECOND_LEVELS.has(second) ? 3 : 2;

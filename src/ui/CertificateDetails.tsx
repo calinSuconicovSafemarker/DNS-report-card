@@ -12,7 +12,7 @@ export function CertificateSummary({ data }: { data: CertificateData }) {
     <p className="cert-summary">
       <CalendarClock aria-hidden="true" size={16} />
       <span>
-        Latest certificate issued for this name, from <strong>{data.source}</strong>’s public logs.
+        Latest issued certificate for this name, from <strong>{data.source}</strong>’s public logs.
         {daysLeft !== null && <span className="cert-countdown">{countdown(daysLeft)}</span>}
       </span>
     </p>
