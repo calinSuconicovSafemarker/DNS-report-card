@@ -75,6 +75,13 @@ describe('HTTPS record Check', () => {
     });
   });
 
+  it("is Couldn't check, not 'no record', when the resolver answers SERVFAIL", async () => {
+    // dnssec-failed.org: validating resolvers answer SERVFAIL for every record.
+    const https = await httpsResult('dnssec-failed.org');
+    expect(https).toMatchObject({ status: 'couldnt-check', checkedName: 'dnssec-failed.org' });
+    expect(https.details).toContainEqual({ label: 'Reason', value: expect.stringMatching(/SERVFAIL/) });
+  });
+
   it("is Couldn't check, not graded, when the service never answers in time", async () => {
     const recorded = fakeFetch();
     // The Hostname resolves, but the HTTPS record lookup never answers.

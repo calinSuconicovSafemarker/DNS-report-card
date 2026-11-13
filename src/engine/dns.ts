@@ -50,6 +50,29 @@ export class DnsUnreachableError extends Error {
   }
 }
 
+/** RCODEs that mean the resolver answered the question: the name exists (with or without records) or doesn't. */
+const NOERROR = 0;
+const NXDOMAIN = 3;
+const RCODE_NAMES: Record<number, string> = { 1: 'FORMERR', 2: 'SERVFAIL', 4: 'NOTIMP', 5: 'REFUSED' };
+
+/** Thrown when a resolver answered, but with an error RCODE (e.g. SERVFAIL): the records are unknown, not absent. */
+export class DnsAnswerError extends Error {
+  constructor(type: RecordTypeName, rcode: number) {
+    super(`The ${type} lookup was answered with ${RCODE_NAMES[rcode] ?? `RCODE ${rcode}`}`);
+    this.name = 'DnsAnswerError';
+  }
+}
+
+/**
+ * The records of `type` in an answer. An answer with an error RCODE such as
+ * SERVFAIL says nothing about the records, so it throws DnsAnswerError
+ * (the Check becomes Couldn't check) instead of reading as "no records".
+ */
+export function recordsOf(answer: DnsAnswer, type: RecordTypeName): DnsRecord[] {
+  if (answer.rcode !== NOERROR && answer.rcode !== NXDOMAIN) throw new DnsAnswerError(type, answer.rcode);
+  return answer.answer.filter((r) => r.type === RecordType[type]);
+}
+
 interface DohRecord {
   name: string;
   type: number;

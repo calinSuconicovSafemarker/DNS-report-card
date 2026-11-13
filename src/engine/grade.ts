@@ -3,7 +3,7 @@ import type { CheckResult, Status } from './types';
 export type Grade = 'A' | 'B' | 'C' | 'D' | 'F';
 
 export interface Grading {
-  /** 0-100, rounded. */
+  /** 0-100, rounded for display. The Grade comes from the unrounded Score. */
   score: number;
   grade: Grade;
   /** Number of Check results that counted toward the Score. */
@@ -34,8 +34,9 @@ export function gradeResults(
     gradedCount++;
   }
   if (possible === 0) return null;
-  const score = Math.round((earned / possible) * 100);
-  return { score, grade: toGrade(score), gradedCount, totalCount };
+  const exact = (earned / possible) * 100;
+  // Thresholds apply to the exact Score: 89.5 is a B, even though it shows as 90.
+  return { score: Math.round(exact), grade: toGrade(exact), gradedCount, totalCount };
 }
 
 function toGrade(score: number): Grade {

@@ -1,4 +1,4 @@
-import { RecordType, type DnsRecord } from '../dns';
+import { recordsOf, type DnsRecord } from '../dns';
 import type { Check, CheckResult, Detail, Status } from '../types';
 
 /** Which case of its Status a DNSSEC result is; selects the explanation copy. */
@@ -16,8 +16,9 @@ export const dnssecCheck: Check = {
     // SERVFAIL from a validating resolver: ask again without validation to tell broken DNSSEC from a dead zone.
     const broken = validated.rcode === SERVFAIL;
     const dnskey = broken ? await dns.query(apex, 'DNSKEY', { checkingDisabled: true }) : validated;
-    const dsRecords = ds.answer.filter((r) => r.type === RecordType.DS);
-    const dnskeyRecords = dnskey.answer.filter((r) => r.type === RecordType.DNSKEY);
+    // Any other error answer (including SERVFAIL with checking disabled) leaves the records unknown: Couldn't check.
+    const dsRecords = recordsOf(ds, 'DS');
+    const dnskeyRecords = recordsOf(dnskey, 'DNSKEY');
 
     const result = (status: Status, reason: DnssecReason, verdict: string): CheckResult => ({
       check: 'dnssec',

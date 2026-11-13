@@ -55,6 +55,12 @@ describe('Nameservers Check', () => {
     expect(ns).toMatchObject({ status: 'fail', checkedName: 'yp.to', verdict: 'Only one nameserver' });
   });
 
+  it("is Couldn't check, not 'no nameservers', when the resolver answers SERVFAIL", async () => {
+    const ns = await nameservers('dnssec-failed.org');
+    expect(ns).toMatchObject({ status: 'couldnt-check', checkedName: 'dnssec-failed.org' });
+    expect(ns.details).toEqual([{ label: 'Reason', value: 'The NS lookup was answered with SERVFAIL' }]);
+  });
+
   it('gives the same result from Google answers (trailing dots, other record order)', async () => {
     expect(await nameservers('cloudflare.com', { down: ['cloudflare'] })).toEqual(await nameservers('cloudflare.com'));
   });

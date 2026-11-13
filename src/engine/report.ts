@@ -1,7 +1,7 @@
 import { flagCaaMismatches } from './caaMismatch';
 import { isCertificateResult, type CertificateResult } from './checks/certificate';
 import { catalog, checks as registeredChecks } from './checks';
-import { createDnsClient, DnsUnreachableError } from './dns';
+import { createDnsClient, DnsAnswerError, DnsUnreachableError } from './dns';
 import { gradeResults, type Grading } from './grade';
 import { aliasNote, findAlias, findZoneApex, lookupHostname } from './names';
 import { normalizeTarget, type TargetRejection } from './target';
@@ -152,8 +152,8 @@ async function runCheck(check: Check, ctx: CheckContext, timeoutMs: number): Pro
       verdict: 'Couldn’t check — no response from the service',
       checkedName: ctx.hostname,
       details:
-        error instanceof DnsUnreachableError || error instanceof CheckTimeoutError
-          ? [{ label: 'Error', value: error.message }]
+        error instanceof DnsUnreachableError || error instanceof DnsAnswerError || error instanceof CheckTimeoutError
+          ? [{ label: 'Reason', value: error.message }]
           : [],
     };
   } finally {

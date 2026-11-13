@@ -1,4 +1,4 @@
-import { RecordType, type DnsClient, type DnsRecord } from '../dns';
+import { recordsOf, type DnsClient, type DnsRecord } from '../dns';
 import type { Check, CheckResult, Detail } from '../types';
 
 /**
@@ -76,6 +76,7 @@ export const caaCheck: Check = {
       return {
         check: 'caa',
         status: 'fail',
+        reason: 'no-ca-named',
         verdict: 'CAA set names no certificate authority (no issue or issuewild tag)',
         checkedName: found.name,
         details,
@@ -111,8 +112,8 @@ async function findRelevantCaaSet(dns: DnsClient, hostname: string): Promise<Caa
   const searched: string[] = [];
   for (let name = hostname; ; name = name.slice(name.indexOf('.') + 1)) {
     searched.push(name);
-    const response = await dns.query(name, 'CAA');
-    const records = response.answer.filter((r) => r.type === RecordType.CAA);
+    // A SERVFAIL says nothing about this name's CAA set: stop (Couldn't check) rather than climb past it.
+    const records = recordsOf(await dns.query(name, 'CAA'), 'CAA');
     if (records.length > 0) return { found: { name, records }, searched };
     if (!name.includes('.')) return { found: null, searched };
   }

@@ -10,6 +10,18 @@ async function dnssecResult(target: string) {
   return result;
 }
 
+/** Recorded answers, except that queries whose URL contains `match` are answered SERVFAIL. */
+function servfailOn(match: (url: string) => boolean): typeof fetch {
+  const recorded = fakeFetch();
+  return async (input, init) => (match(String(input)) ? Response.json({ Status: 2, AD: false }) : recorded(input, init));
+}
+
+async function dnssecWith(fetch: typeof globalThis.fetch) {
+  const r = await collectReport('cloudflare.com', { fetch });
+  if (r.kind !== 'report') throw new Error(r.kind);
+  return r.results.find((x) => x.check === 'dnssec')!;
+}
+
 describe('DNSSEC Check', () => {
   it('passes for a signed, validated Zone apex, showing its DS and DNSKEY records', async () => {
     const dnssec = await dnssecResult('cloudflare.com');
@@ -77,5 +89,17 @@ describe('DNSSEC Check', () => {
       label: 'DNSKEY',
       value: '257 3 13 1CcdGV2EigL5bsrPpkSvYHzyfYR1udWKZtWHU9EQXMrbtKglmUDYKKkwwajHQQ7TAMIit/vQbCrh4SPkxLbhgg==',
     });
+  });
+
+  it("is Couldn't check, not 'no DS', when the DS lookup answers SERVFAIL", async () => {
+    const dnssec = await dnssecWith(servfailOn((u) => u.includes('type=DS')));
+    expect(dnssec).toMatchObject({ status: 'couldnt-check', checkedName: 'cloudflare.com' });
+    expect(dnssec.details).toEqual([{ label: 'Reason', value: 'The DS lookup was answered with SERVFAIL' }]);
+  });
+
+  it("is Couldn't check, not 'not enabled', when DNSKEY answers SERVFAIL even with checking disabled", async () => {
+    const dnssec = await dnssecWith(servfailOn((u) => u.includes('type=DNSKEY')));
+    expect(dnssec).toMatchObject({ status: 'couldnt-check', checkedName: 'cloudflare.com' });
+    expect(dnssec.details).toEqual([{ label: 'Reason', value: 'The DNSKEY lookup was answered with SERVFAIL' }]);
   });
 });

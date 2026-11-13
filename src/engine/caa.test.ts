@@ -69,6 +69,27 @@ describe('CAA Check', () => {
     expect(explanationFor('caa', 'fail')?.example).toMatch(/IN CAA 0 issue "/);
   });
 
+  it('fails with its own explanation when a CAA set exists but names no certificate authority (iodef only)', async () => {
+    const recorded = fakeFetch();
+    const iodefOnly: typeof fetch = async (input, init) => {
+      if (!String(input).includes('name=example.com&type=CAA')) return recorded(input, init);
+      return Response.json({
+        Status: 0,
+        AD: false,
+        Answer: [{ name: 'example.com', type: 257, TTL: 300, data: '0 iodef "mailto:security@example.com"' }],
+      });
+    };
+    const r = await collectReport('example.com', { fetch: iodefOnly });
+    if (r.kind !== 'report') throw new Error(r.kind);
+    const caa = r.results.find((x) => x.check === 'caa')!;
+
+    expect(caa).toMatchObject({ status: 'fail', reason: 'no-ca-named', checkedName: 'example.com' });
+    const copy = explanationFor('caa', caa.status, caa.reason);
+    expect(copy?.whatThisMeans).toMatch(/A CAA record exists but doesn’t name any certificate authority/);
+    expect(copy?.whatThisMeans).not.toMatch(/No CAA record was found/);
+    expect(copy?.example).toMatch(/IN CAA 0 issue "/);
+  });
+
   it("reads the alias target's CAA on an Alias Hostname, with the Alias note", async () => {
     const caa = await caaResult('www.github.com');
     expect(caa).toMatchObject({
@@ -87,6 +108,13 @@ describe('CAA Check', () => {
     const viaGoogle = await caaResult('google.com', { down: ['cloudflare'] });
     expect(viaGoogle).toEqual(await caaResult('google.com'));
     expect(caaPolicyOf(viaGoogle)).toEqual({ foundAt: 'google.com', issue: ['pki.goog'], issuewild: [], iodef: [] });
+  });
+
+  it("is Couldn't check, not 'no CAA record', when the resolver answers SERVFAIL, and stops walking up", async () => {
+    const caa = await caaResult('dnssec-failed.org');
+    expect(caa).toMatchObject({ status: 'couldnt-check', checkedName: 'dnssec-failed.org' });
+    expect(caa.details).toEqual([{ label: 'Reason', value: 'The CAA lookup was answered with SERVFAIL' }]);
+    expect(caaPolicyOf(caa)).toBeUndefined();
   });
 
   it("is Couldn't check, with no policy, when the DNS service doesn't answer", async () => {

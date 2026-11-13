@@ -1,4 +1,4 @@
-import { RecordType } from '../dns';
+import { recordsOf } from '../dns';
 import type { Check, CheckResult, Detail } from '../types';
 
 interface Nameserver {
@@ -16,16 +16,15 @@ export const nameserversCheck: Check = {
   id: 'nameservers',
   async run({ dns, zoneApex }): Promise<CheckResult> {
     const apex = await zoneApex();
-    const response = await dns.query(apex, 'NS');
-    const hostnames = unique(response.answer.filter((r) => r.type === RecordType.NS).map((r) => r.data)).sort();
+    const hostnames = unique(recordsOf(await dns.query(apex, 'NS'), 'NS').map((r) => r.data)).sort();
 
     const nameservers: Nameserver[] = await Promise.all(
       hostnames.map(async (hostname) => {
-        const a = await dns.query(hostname, 'A');
+        const a = recordsOf(await dns.query(hostname, 'A'), 'A');
         return {
           hostname,
           provider: registrableDomain(hostname),
-          ipv4: a.answer.filter((r) => r.type === RecordType.A && r.name === hostname).map((r) => r.data).sort(byAddress),
+          ipv4: a.filter((r) => r.name === hostname).map((r) => r.data).sort(byAddress),
         };
       }),
     );

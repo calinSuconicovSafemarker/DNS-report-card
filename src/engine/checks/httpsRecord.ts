@@ -1,4 +1,4 @@
-import { RecordType } from '../dns';
+import { recordsOf } from '../dns';
 import type { Check, CheckResult } from '../types';
 
 /** HTTPS record (SVCB type 65) on the Hostname. Pass when present, Warning when absent, never Fail. */
@@ -6,8 +6,7 @@ export const httpsRecordCheck: Check = {
   id: 'https-record',
   readsHostnameRecords: true,
   async run({ hostname, dns }): Promise<CheckResult> {
-    const response = await dns.query(hostname, 'HTTPS');
-    const records = response.answer.filter((r) => r.type === RecordType.HTTPS);
+    const records = recordsOf(await dns.query(hostname, 'HTTPS'), 'HTTPS');
 
     if (records.length === 0) {
       return {

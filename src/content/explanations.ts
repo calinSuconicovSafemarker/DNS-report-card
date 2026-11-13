@@ -147,6 +147,15 @@ const explanations: Partial<Record<CheckId, CheckCopy>> = {
  * (e.g. DNSSEC Fail: broken vs not enabled). Takes precedence over the Status copy.
  */
 const reasonExplanations: Partial<Record<CheckId, Record<string, Explanation>>> = {
+  caa: {
+    'no-ca-named': {
+      whatThisMeans:
+        'A CAA record exists but doesn’t name any certificate authority: it has no "issue" or "issuewild" line (for example, only an "iodef" reporting address). Without one, any certificate authority in the world may still issue a certificate for this name.',
+      howToFix:
+        'Find out which certificate authority issues your certificates (your hosting provider or CDN can tell you), then add an "issue" line naming it next to your existing CAA record, at the name listed under "Found at". Add one "issue" line per authority you use.',
+      example: 'example.com. 3600 IN CAA 0 issue "letsencrypt.org"',
+    },
+  },
   dnssec: {
     'not-validated': {
       whatThisMeans:

@@ -55,6 +55,26 @@ describe('Certificate Check', () => {
     expect(result.certificate.daysLeft).toBe(75);
   });
 
+  it('never judges on an incomplete Cert Spotter listing: past the page cap it asks crt.sh instead', async () => {
+    // Cert Spotter lists issuances oldest first, so stopping early would miss the newest certificates.
+    const requested: string[] = [];
+    const recorded = fakeFetch({ down: ['crtsh'] });
+    const spy: typeof fetch = (input, init) => {
+      requested.push(String(input));
+      return recorded(input, init);
+    };
+
+    const result = await certificateResult('github.com', { fetch: spy, check: { certSpotterMaxPages: 1 } });
+
+    expect(result.status).toBe('couldnt-check');
+    expect(result.details).toEqual([
+      { label: 'Cert Spotter', value: 'Too many certificates to list them all' },
+      { label: 'crt.sh', value: 'No answer' },
+    ]);
+    expect(requested.filter((u) => u.startsWith('https://api.certspotter.com/'))).toHaveLength(1);
+    expect(requested.some((u) => u.startsWith('https://crt.sh/'))).toBe(true);
+  });
+
   it('falls back to crt.sh when Cert Spotter does not answer, and names crt.sh as the source', async () => {
     const result = await certificateResult('crypto.cloudflare.com', { fake: { down: ['certspotter'] } });
 

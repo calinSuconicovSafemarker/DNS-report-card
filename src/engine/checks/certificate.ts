@@ -72,7 +72,10 @@ export interface CertificateCheckOptions {
   /** Budget for all Cert Spotter pages together. */
   certSpotterTimeoutMs: number;
   crtShTimeoutMs: number;
-  /** Cert Spotter pages to read at most. */
+  /**
+   * Cert Spotter pages to read at most. Past this, the listing is treated as
+   * no answer (its newest certificates would be missing) and crt.sh is asked.
+   */
   certSpotterMaxPages: number;
 }
 
@@ -80,7 +83,7 @@ const DEFAULTS: CertificateCheckOptions = {
   now: () => new Date(),
   certSpotterTimeoutMs: 8_000,
   crtShTimeoutMs: 20_000,
-  certSpotterMaxPages: 3,
+  certSpotterMaxPages: 10,
 };
 
 /** Pass needs more than this many days left on the Latest issued certificate. */
@@ -207,8 +210,10 @@ const certSpotter: Source = {
     const base = `https://api.certspotter.com/v1/issuances?domain=${encodeURIComponent(hostname)}&expand=dns_names&expand=issuer`;
     const issuances: CertSpotterIssuance[] = [];
     // The Link header isn't readable from the browser, so page with `after=<last id>` until a page comes back empty.
+    // Issuances come oldest first: the newest certificates are on the last page, so a partial listing is no answer.
     let after: string | null = null;
-    for (let page = 0; page < certSpotterMaxPages; page++) {
+    for (let page = 0; ; page++) {
+      if (page === certSpotterMaxPages) throw new IncompleteListingError();
       const rows = (await getJson(fetch, after ? `${base}&after=${encodeURIComponent(after)}` : base, signal)) as CertSpotterIssuance[];
       if (!Array.isArray(rows)) throw new Error('Unexpected response');
       if (rows.length === 0) break;
@@ -255,7 +260,16 @@ async function getJson(fetch: typeof globalThis.fetch, url: string, signal: Abor
   return response.json();
 }
 
+/** Cert Spotter has more pages than the cap allows; judging the oldest ones alone could raise a false Fail. */
+class IncompleteListingError extends Error {
+  constructor() {
+    super('Too many certificates to list them all');
+    this.name = 'IncompleteListingError';
+  }
+}
+
 function describeFailure(error: unknown): string {
+  if (error instanceof IncompleteListingError) return error.message;
   if (error instanceof DOMException && error.name === 'TimeoutError') return 'No answer in time';
   if (error instanceof Error && /^HTTP \d+$/.test(error.message)) return `No answer (${error.message})`;
   return 'No answer';
