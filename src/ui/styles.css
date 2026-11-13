@@ -56,7 +56,7 @@
   --pass-soft: #e5f5ec;
   --warning: #8a4f00;
   --warning-soft: #fdf1dc;
-  --warning-bar: #e59a1a;
+  --warning-bar: #c27c00; /* 3:1 on surface, surface-2 and warning-soft (non-text) */
   --fail: #b42318;
   --fail-soft: #fdeceb;
   --couldnt-check: #475467;
