@@ -2,6 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { collectReport, runReport, type ReportEvent } from './report';
 import { fakeFetch } from './__fixtures__/fakeFetch';
 import type { Check, CheckId, Status } from './types';
+import { httpsRecordCheck } from './checks/httpsRecord';
+
+/** These tests cover the engine and the HTTPS record Check; other Checks have their own test files. */
+const checks = [httpsRecordCheck];
 
 /** A stand-in Check with a fixed outcome, for grading tests (the real Checks arrive in later tickets). */
 function fixed(id: CheckId, status: Status): Check {
@@ -27,7 +31,7 @@ const graded = async (...checks: Check[]) => {
   return r.grading;
 };
 
-const run = (target: string) => collectReport(target, { fetch: fakeFetch() });
+const run = (target: string) => collectReport(target, { fetch: fakeFetch(), checks });
 
 async function report(target: string) {
   const r = await run(target);
@@ -76,7 +80,7 @@ describe('HTTPS record Check', () => {
     // The Hostname resolves, but the HTTPS record lookup never answers.
     const hangOnHttps: typeof fetch = (input, init) =>
       String(input).includes('type=HTTPS') ? new Promise<Response>(() => {}) : recorded(input, init);
-    const r = await collectReport('cloudflare.com', { fetch: hangOnHttps, checkTimeoutMs: 20 });
+    const r = await collectReport('cloudflare.com', { fetch: hangOnHttps, checkTimeoutMs: 20, checks });
     if (r.kind !== 'report') throw new Error(`expected a report, got ${r.kind}`);
     expect(r.results).toEqual([
       expect.objectContaining({
@@ -91,8 +95,8 @@ describe('HTTPS record Check', () => {
 
 describe('DNS providers', () => {
   it('falls back to Google when Cloudflare is unreachable, with the same results', async () => {
-    const viaGoogle = await collectReport('cloudflare.com', { fetch: fakeFetch({ down: ['cloudflare'] }) });
-    const viaCloudflare = await collectReport('cloudflare.com', { fetch: fakeFetch() });
+    const viaGoogle = await collectReport('cloudflare.com', { fetch: fakeFetch({ down: ['cloudflare'] }), checks });
+    const viaCloudflare = await collectReport('cloudflare.com', { fetch: fakeFetch(), checks });
     expect(viaGoogle).toEqual(viaCloudflare);
     expect(viaGoogle).toMatchObject({ kind: 'report', grading: { grade: 'A' } });
   });
@@ -100,7 +104,7 @@ describe('DNS providers', () => {
   it('gives up on a provider after 4 s and moves on to the next', async () => {
     vi.useFakeTimers();
     try {
-      const pending = collectReport('cloudflare.com', { fetch: fakeFetch({ hang: ['cloudflare'] }) });
+      const pending = collectReport('cloudflare.com', { fetch: fakeFetch({ hang: ['cloudflare'] }), checks });
       let settled = false;
       void pending.then(() => (settled = true));
       await vi.advanceTimersByTimeAsync(3900);
@@ -136,7 +140,7 @@ describe('Alias', () => {
   });
 
   it('is detected from Google answers too (trailing dots)', async () => {
-    const r = await collectReport('www.github.com', { fetch: fakeFetch({ down: ['cloudflare'] }) });
+    const r = await collectReport('www.github.com', { fetch: fakeFetch({ down: ['cloudflare'] }), checks });
     if (r.kind !== 'report') throw new Error(r.kind);
     expect(r.results[0].aliasNote).toBe(NOTE);
   });
@@ -333,12 +337,12 @@ describe('Grade', () => {
 describe('Report events', () => {
   it('announces the Hostname and Checks, then each Check result, then the Grade', async () => {
     const events: ReportEvent['type'][] = [];
-    for await (const e of runReport('cloudflare.com', { fetch: fakeFetch() })) events.push(e.type);
+    for await (const e of runReport('cloudflare.com', { fetch: fakeFetch(), checks })) events.push(e.type);
     expect(events).toEqual(['started', 'check', 'graded']);
   });
 
   it('lists all six Checks in card order with their weights, marking the ones not built yet', async () => {
-    const events = runReport('cloudflare.com', { fetch: fakeFetch() });
+    const events = runReport('cloudflare.com', { fetch: fakeFetch(), checks });
     const first = (await events.next()).value;
     expect(first).toEqual({
       type: 'started',
