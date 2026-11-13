@@ -4,14 +4,14 @@
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Cert Spotter issuances API first: exact-domain query with issuer and DNS-name details; pages using `after=` (the Link header isn't readable from the browser), up to about 3 pages; 8 s timeout
-- [ ] crt.sh JSON as the fallback, 20 s timeout; any network error, including 502s that arrive without CORS headers, counts as no answer
-- [ ] Neither answers → Couldn't check
-- [ ] The card names which service answered and says "Latest certificate issued for this name"
-- [ ] Pass: Latest issued certificate (expired ones filtered out client-side) has more than 21 days left. Warning: 21 days or fewer. Fail: latest expired, or no certificates found.
-- [ ] Expiry countdown shown
-- [ ] Issuance history: a 12-month timeline grouped by issuer, with Status Info
-- [ ] Explanation copy for each Status is in the content module
-- [ ] Engine tests: Cert Spotter success (multi-page), Cert Spotter failure with crt.sh success, both failing, expiring soon, expired, none found
+- [x] Cert Spotter issuances API first: exact-domain query with issuer and DNS-name details; pages using `after=` (the Link header isn't readable from the browser), up to about 3 pages; 8 s timeout
+- [x] crt.sh JSON as the fallback, 20 s timeout; any network error, including 502s that arrive without CORS headers, counts as no answer
+- [x] Neither answers → Couldn't check
+- [x] The card names which service answered and says "Latest certificate issued for this name"
+- [x] Pass: Latest issued certificate (expired ones filtered out client-side) has more than 21 days left. Warning: 21 days or fewer. Fail: latest expired, or no certificates found.
+- [x] Expiry countdown shown
+- [x] Issuance history: a 12-month timeline grouped by issuer, with Status Info
+- [x] Explanation copy for each Status is in the content module
+- [x] Engine tests: Cert Spotter success (multi-page), Cert Spotter failure with crt.sh success, both failing, expiring soon, expired, none found
