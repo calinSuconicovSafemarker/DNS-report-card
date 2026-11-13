@@ -4,13 +4,13 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Per-query fallback to Google DoH JSON. Requests to Google must be simple GETs with no custom headers, because its CORS preflight returns no CORS headers.
-- [ ] 4 s timeout per provider; a timeout or network error moves on to the next provider
-- [ ] Provider differences are normalized: trailing dots, hex case, the shape of the error comment
-- [ ] NXDOMAIN for the Hostname produces a Report-level "We couldn't find this domain in DNS — check the spelling" page with no cards and no Grade
-- [ ] When both providers fail, the Report shows a "Couldn't reach DNS lookup service, try again" error with no Grade
-- [ ] Alias detection: a CNAME in the answer adds the note "`X` is an alias of `Y`; results reflect the alias target" to the affected cards, without changing the Status
-- [ ] Zone apex discovery by walking up with SOA queries is available to Checks
-- [ ] Engine tests cover: fallback, both failing, NXDOMAIN, Alias, Zone apex for a subdomain under a multi-label public suffix (e.g. `.co.uk`)
+- [x] Per-query fallback to Google DoH JSON. Requests to Google must be simple GETs with no custom headers, because its CORS preflight returns no CORS headers.
+- [x] 4 s timeout per provider; a timeout or network error moves on to the next provider
+- [x] Provider differences are normalized: trailing dots, hex case, the shape of the error comment
+- [x] NXDOMAIN for the Hostname produces a Report-level "We couldn't find this domain in DNS — check the spelling" page with no cards and no Grade
+- [x] When both providers fail, the Report shows a "Couldn't reach DNS lookup service, try again" error with no Grade
+- [x] Alias detection: a CNAME in the answer adds the note "`X` is an alias of `Y`; results reflect the alias target" to the affected cards, without changing the Status
+- [x] Zone apex discovery by walking up with SOA queries is available to Checks
+- [x] Engine tests cover: fallback, both failing, NXDOMAIN, Alias, Zone apex for a subdomain under a multi-label public suffix (e.g. `.co.uk`)
