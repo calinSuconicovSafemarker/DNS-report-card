@@ -1,6 +1,7 @@
 import { catalog, checks as registeredChecks } from './checks';
 import { createDnsClient, DnsUnreachableError } from './dns';
 import { gradeResults, type Grading } from './grade';
+import { aliasNote, findAlias, findZoneApex, lookupHostname } from './names';
 import { normalizeTarget, type TargetRejection } from './target';
 import type { Check, CheckContext, CheckId, CheckResult } from './types';
 
@@ -30,6 +31,10 @@ export interface ReportCheck {
 export type ReportEvent =
   /** Report-level outcome: the Target can't be checked. Nothing else follows. */
   | { type: 'invalid-target'; reason: TargetRejection; message: string }
+  /** Report-level outcome: the Hostname doesn't exist (NXDOMAIN). Nothing else follows. */
+  | { type: 'not-found'; hostname: string; message: string }
+  /** Report-level outcome: no DNS provider answered. Nothing else follows. */
+  | { type: 'dns-unreachable'; hostname: string; message: string }
   /**
    * The Target was normalized. Lists all six Checks in card order; one
    * `check` event follows for each Check that is `built`.
@@ -39,6 +44,9 @@ export type ReportEvent =
   | { type: 'check'; result: CheckResult }
   /** Every Check settled. `grading` is null when no Check could be graded. */
   | { type: 'graded'; grading: Grading | null };
+
+const NOT_FOUND_MESSAGE = 'We couldn’t find this domain in DNS — check the spelling.';
+const DNS_UNREACHABLE_MESSAGE = 'Couldn’t reach the DNS lookup service. Try again in a moment.';
 
 /**
  * The Report engine, and the project's single test seam:
@@ -53,7 +61,30 @@ export async function* runReport(target: string, options: ReportOptions): AsyncG
     return;
   }
   const { hostname } = normalized;
-  const ctx: CheckContext = { hostname, dns: createDnsClient(options.fetch), fetch: options.fetch };
+  const dns = createDnsClient(options.fetch);
+
+  let lookup;
+  try {
+    lookup = await lookupHostname(dns, hostname);
+  } catch (error) {
+    if (!(error instanceof DnsUnreachableError)) throw error;
+    yield { type: 'dns-unreachable', hostname, message: DNS_UNREACHABLE_MESSAGE };
+    return;
+  }
+  if (!lookup.exists) {
+    yield { type: 'not-found', hostname, message: NOT_FOUND_MESSAGE };
+    return;
+  }
+
+  const { soa } = lookup;
+  let zoneApex: Promise<string> | undefined;
+  const ctx: CheckContext = {
+    hostname,
+    dns,
+    fetch: options.fetch,
+    alias: findAlias(hostname, soa),
+    zoneApex: () => (zoneApex ??= findZoneApex(dns, hostname, soa)),
+  };
   const checks = options.checks ?? registeredChecks;
   const built = new Set(checks.map((c) => c.id));
   const weightOf = (id: CheckId) => catalog.find((c) => c.id === id)?.weight ?? 0;
@@ -88,7 +119,12 @@ async function runCheck(check: Check, ctx: CheckContext, timeoutMs: number): Pro
     timer = setTimeout(() => reject(new CheckTimeoutError(timeoutMs)), timeoutMs);
   });
   try {
-    return await Promise.race([check.run(ctx), deadline]);
+    const result = await Promise.race([check.run(ctx), deadline]);
+    // Records read on an Alias are the alias target's: say so, without changing the Status.
+    if (check.readsHostnameRecords && ctx.alias && result.checkedName === ctx.hostname && result.status !== 'couldnt-check') {
+      return { ...result, aliasNote: aliasNote(ctx.alias) };
+    }
+    return result;
   } catch (error) {
     return {
       check: check.id,
@@ -114,7 +150,8 @@ class CheckTimeoutError extends Error {
 
 export type CollectedReport =
   | { kind: 'report'; hostname: string; results: CheckResult[]; grading: Grading | null }
-  | { kind: 'invalid-target'; reason: TargetRejection; message: string };
+  | { kind: 'invalid-target'; reason: TargetRejection; message: string }
+  | { kind: 'not-found' | 'dns-unreachable'; hostname: string; message: string };
 
 /** Drain `runReport` into its final state. For tests and non-progressive callers. */
 export async function collectReport(target: string, options: ReportOptions): Promise<CollectedReport> {
@@ -124,6 +161,9 @@ export async function collectReport(target: string, options: ReportOptions): Pro
     switch (event.type) {
       case 'invalid-target':
         return { kind: 'invalid-target', reason: event.reason, message: event.message };
+      case 'not-found':
+      case 'dns-unreachable':
+        return { kind: event.type, hostname: event.hostname, message: event.message };
       case 'started':
         hostname = event.hostname;
         break;

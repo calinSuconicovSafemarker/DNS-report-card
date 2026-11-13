@@ -6,7 +6,7 @@ import { Scorecard } from './Scorecard';
 import { GradeRing } from './GradeRing';
 import { Outcome } from './Outcome';
 import { STATUS_LABEL, StatusIcon } from './status';
-import { useReport, type ReportState } from './useReport';
+import { useReport, type ReportOutcome, type ReportState } from './useReport';
 
 const QUERY_PARAM = 'd';
 
@@ -97,7 +97,12 @@ export function App() {
       </header>
 
       <main>
-        {state.phase === 'outcome' && <Outcome outcome={state.outcome} />}
+        {state.phase === 'outcome' && (
+          <Outcome
+            outcome={state.outcome}
+            onRetry={retryFor(state.outcome, runAgain)}
+          />
+        )}
         {(state.phase === 'running' || state.phase === 'done') && <Report state={state} onRunAgain={runAgain} />}
       </main>
 
@@ -106,6 +111,11 @@ export function App() {
       </footer>
     </div>
   );
+}
+
+/** Only a DNS outage is worth retrying as-is; the other outcomes need a different Target. */
+function retryFor(outcome: ReportOutcome, runAgain: (hostname: string) => void): (() => void) | undefined {
+  return outcome.kind === 'dns-unreachable' ? () => runAgain(outcome.hostname) : undefined;
 }
 
 const TALLY_ORDER: Status[] = ['pass', 'warning', 'fail', 'couldnt-check', 'info'];

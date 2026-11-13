@@ -30,5 +30,9 @@ export const catalog: readonly CheckInfo[] = [
  * 2. list it here (order doesn't matter; cards follow the catalog),
  * 3. add its copy in `src/content/explanations.ts`.
  * The UI then renders its card in place of the placeholder; no UI change is needed.
+ *
+ * `ctx.zoneApex()` and `ctx.alias` give the shared name resolution (see
+ * `../names.ts`). A Check that reads records on the Hostname sets
+ * `readsHostnameRecords: true` so the engine adds the Alias note to its card.
  */
 export const checks: readonly Check[] = [httpsRecordCheck];

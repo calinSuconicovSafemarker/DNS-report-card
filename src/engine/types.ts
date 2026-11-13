@@ -1,4 +1,5 @@
 import type { DnsClient } from './dns';
+import type { Alias } from './names';
 
 /** Identifier of one of the six Checks (see `checks/index.ts` for titles, weights and card order). */
 export type CheckId = 'dnssec' | 'caa' | 'nameservers' | 'https-record' | 'certificate' | 'hsts-preload';
@@ -20,19 +21,32 @@ export interface CheckResult {
   checkedName: string;
   /** Raw data for technical users. */
   details: Detail[];
-  /** Set when the evaluated name is an Alias (ticket 02). */
+  /** Set by the Report engine when the Check read records on an Alias Hostname. */
   aliasNote?: string;
 }
 
-/** What every Check receives. Later tickets add shared lookups here (Zone apex, Alias, Preload list...). */
+/** What every Check receives. Later tickets add shared lookups here (Preload list...). */
 export interface CheckContext {
   hostname: string;
+  /** DoH client: Cloudflare, falling back to Google per query, 4 s timeout each. */
   dns: DnsClient;
   fetch: typeof fetch;
+  /** Set when the Hostname is an Alias (its answer is a CNAME chain). */
+  alias: Alias | null;
+  /**
+   * The Hostname's Zone apex, found by walking up with SOA queries. Memoized:
+   * every Check shares one walk. Rejects with DnsUnreachableError if DNS stops answering.
+   */
+  zoneApex(): Promise<string>;
 }
 
 /** An implemented Check. Its title and weight live in the catalog (`checks/index.ts`). */
 export interface Check {
   id: CheckId;
+  /**
+   * The Check reads DNS records on the Hostname, so on an Alias they are the
+   * alias target's. The engine then adds the Alias note to its result.
+   */
+  readsHostnameRecords?: boolean;
   run(ctx: CheckContext): Promise<CheckResult>;
 }

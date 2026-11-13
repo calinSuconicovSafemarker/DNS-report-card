@@ -8,7 +8,9 @@ import type { CheckId, CheckResult } from '../engine/types';
  * cards and no Grade. Add a variant here for each new Report-level event
  * (e.g. NXDOMAIN, DNS unreachable) and its copy in `Outcome.tsx`.
  */
-export type ReportOutcome = { kind: 'invalid-target'; message: string };
+export type ReportOutcome =
+  | { kind: 'invalid-target'; message: string }
+  | { kind: 'not-found' | 'dns-unreachable'; hostname: string; message: string };
 
 export type ReportState =
   | { phase: 'idle' }
@@ -38,6 +40,14 @@ export function useReport(onHostname: (hostname: string) => void) {
         switch (event.type) {
           case 'invalid-target':
             setState({ phase: 'outcome', outcome: { kind: 'invalid-target', message: event.message } });
+            break;
+          case 'not-found':
+          case 'dns-unreachable':
+            onHostname(event.hostname);
+            setState({
+              phase: 'outcome',
+              outcome: { kind: event.type, hostname: event.hostname, message: event.message },
+            });
             break;
           case 'started':
             onHostname(event.hostname);

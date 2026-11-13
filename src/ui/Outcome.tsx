@@ -1,9 +1,11 @@
-import { Globe, type LucideIcon } from 'lucide-react';
+import { Globe, SearchX, WifiOff, type LucideIcon } from 'lucide-react';
 import type { ReportOutcome } from './useReport';
 
 /** Heading and icon per Report-level outcome. Add an entry for each new `ReportOutcome` kind. */
 const OUTCOME_COPY: Record<ReportOutcome['kind'], { icon: LucideIcon; title: string }> = {
   'invalid-target': { icon: Globe, title: 'We can’t check that name' },
+  'not-found': { icon: SearchX, title: 'Domain not found' },
+  'dns-unreachable': { icon: WifiOff, title: 'DNS lookups aren’t answering' },
 };
 
 /** A whole-Report outcome: one message in place of the Grade and cards. */
