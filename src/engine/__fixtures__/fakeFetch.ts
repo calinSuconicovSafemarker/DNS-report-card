@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { PRELOAD_LIST_URL } from '../checks/hstsPreload';
 
-export type FakeService = 'cloudflare' | 'google' | 'preload';
+export type FakeService = 'cloudflare' | 'google' | 'preload' | 'certspotter' | 'crtsh';
 
 export interface FakeFetchOptions {
   /** Services that fail like a network error (connection refused, CORS block). */
@@ -25,7 +25,13 @@ export interface FakeFetchOptions {
  * - `preload/transport_security_state_static.json` answers the Preload list URL on jsDelivr
  *   (a trimmed copy that keeps the real file's `//` comment lines).
  *
- * Later services (Cert Spotter, crt.sh) add a branch here.
+ * - `certspotter/<domain>.json` answers the first page of
+ *   `https://api.certspotter.com/v1/issuances?domain=<domain>&...`;
+ *   `certspotter/<domain>.after-<id>.json` answers the page requested with `&after=<id>`.
+ * - `crtsh/<domain>.json` answers `https://crt.sh/?q=<domain>&output=json`.
+ *   `down: ['crtsh']` models its 502s, which reach the browser as network errors (no CORS headers).
+ *
+ * Later services add a branch here.
  * Any URL without a fixture rejects like a network error, so unexpected
  * requests show up as test failures (or Couldn't check), never as silent passes.
  */
@@ -34,6 +40,8 @@ export function fakeFetch(options: FakeFetchOptions = {}): typeof fetch {
     cloudflare: loadDir('cloudflare'),
     google: loadDir('google'),
     preload: loadDir('preload'),
+    certspotter: loadDir('certspotter'),
+    crtsh: loadDir('crtsh'),
   };
 
   return async (input, init) => {
@@ -59,6 +67,18 @@ export function fakeFetch(options: FakeFetchOptions = {}): typeof fetch {
 
     if (service === 'preload') return new Response(fixtures.preload.get('transport_security_state_static.json'));
 
+    if (service === 'certspotter') {
+      const after = url.searchParams.get('after');
+      const page = after ? `.after-${after}` : '';
+      const body = fixtures.certspotter.get(`${url.searchParams.get('domain')}${page}.json`);
+      if (body !== undefined) return json(body, 'application/json');
+    }
+
+    if (service === 'crtsh') {
+      const body = fixtures.crtsh.get(`${url.searchParams.get('q')}.json`);
+      if (body !== undefined) return json(body, 'application/json');
+    }
+
     throw new TypeError(`fakeFetch: no fixture for ${url.href}`);
   };
 }
@@ -67,6 +87,8 @@ function serviceFor(url: URL): FakeService | null {
   if (url.origin === 'https://cloudflare-dns.com' && url.pathname === '/dns-query') return 'cloudflare';
   if (url.origin === 'https://dns.google' && url.pathname === '/resolve') return 'google';
   if (url.href === PRELOAD_LIST_URL) return 'preload';
+  if (url.origin === 'https://api.certspotter.com' && url.pathname === '/v1/issuances') return 'certspotter';
+  if (url.origin === 'https://crt.sh' && url.pathname === '/') return 'crtsh';
   return null;
 }
 
@@ -81,6 +103,6 @@ function loadDir(service: string): Map<string, string> {
   return new Map(readdirSync(dir).map((file) => [file, readFileSync(join(dir, file), 'utf8')]));
 }
 
-function json(body: string): Response {
-  return new Response(body, { status: 200, headers: { 'content-type': 'application/dns-json' } });
+function json(body: string, contentType = 'application/dns-json'): Response {
+  return new Response(body, { status: 200, headers: { 'content-type': contentType } });
 }

@@ -63,6 +63,28 @@ const explanations: Partial<Record<CheckId, CheckCopy>> = {
       link: { label: 'Submit your domain at hstspreload.org', href: 'https://hstspreload.org/' },
     },
   },
+  certificate: {
+    pass: {
+      whatThisMeans:
+        'The latest certificate issued for this name, as recorded in public Certificate Transparency logs, has more than three weeks left before it expires. This is the latest certificate issued, which is not necessarily the one your site is serving right now.',
+    },
+    warning: {
+      whatThisMeans:
+        'The latest certificate issued for this name expires within three weeks. Certificates that renew automatically are usually replaced about a month before they expire, so renewal may be stuck. This is the latest certificate issued according to public logs, not necessarily the one your site is serving.',
+      howToFix:
+        'Check that automatic renewal is working (for example in your hosting or CDN dashboard, or your ACME client’s logs) and renew the certificate now if it is not. Then make sure your server is actually using the new certificate.',
+    },
+    fail: {
+      whatThisMeans:
+        'Public Certificate Transparency logs show either no certificate at all for this name, or only certificates that have already expired. Browsers show a full-page security warning for an expired or missing certificate, so visitors may be unable to reach your site over HTTPS.',
+      howToFix:
+        'Issue a new certificate for this name, ideally from a certificate authority that renews automatically (most hosts and CDNs offer free certificates via ACME). If this name is not meant to serve a website, you can ignore this result.',
+    },
+    info: {
+      whatThisMeans:
+        'Every certificate issued for this name in the last 12 months, grouped by the certificate authority that issued it. Regular renewals from the same authority are normal. An authority you do not recognise may mean a forgotten service, or a certificate issued without your knowledge, and is worth looking into.',
+    },
+  },
 };
 
 export function explanationFor(check: CheckId, status: Status): Explanation | undefined {

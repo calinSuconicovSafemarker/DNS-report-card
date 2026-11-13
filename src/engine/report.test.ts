@@ -95,8 +95,8 @@ describe('HTTPS record Check', () => {
 
 describe('DNS providers', () => {
   it('falls back to Google when Cloudflare is unreachable, with the same results', async () => {
-    const viaGoogle = await collectReport('cloudflare.com', { fetch: fakeFetch({ down: ['cloudflare'] }) });
-    const viaCloudflare = await collectReport('cloudflare.com', { fetch: fakeFetch() });
+    const viaGoogle = await collectReport('cloudflare.com', { fetch: fakeFetch({ down: ['cloudflare'] }), checks: onlyHttpsRecord });
+    const viaCloudflare = await collectReport('cloudflare.com', { fetch: fakeFetch(), checks: onlyHttpsRecord });
     expect(viaGoogle).toEqual(viaCloudflare);
     expect(viaGoogle).toMatchObject({ kind: 'report', grading: { grade: 'A' } });
   });
@@ -352,7 +352,7 @@ describe('Report events', () => {
         { id: 'caa', title: 'CAA', weight: 15, built: false },
         { id: 'nameservers', title: 'Nameservers', weight: 20, built: false },
         { id: 'https-record', title: 'HTTPS record', weight: 10, built: true },
-        { id: 'certificate', title: 'Certificate', weight: 20, built: false },
+        { id: 'certificate', title: 'Certificate', weight: 20, built: true },
         { id: 'hsts-preload', title: 'HSTS preload', weight: 10, built: true },
       ],
     });

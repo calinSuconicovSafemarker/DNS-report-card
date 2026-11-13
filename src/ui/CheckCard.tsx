@@ -15,6 +15,8 @@ import { useId, useState, type ReactNode } from 'react';
 import { checkSummary, explanationFor } from '../content/explanations';
 import type { ReportCheck } from '../engine/report';
 import type { CheckId, CheckResult } from '../engine/types';
+import { isCertificateResult } from '../engine/checks/certificate';
+import { CertificateSummary, IssuanceHistoryView } from './CertificateDetails';
 import { CopyableCode } from './CopyableCode';
 import { StatusBadge } from './status';
 
@@ -104,6 +106,7 @@ function ResultCard({ check, result }: { check: ReportCheck; result: CheckResult
           <span>{result.aliasNote}</span>
         </p>
       )}
+      {isCertificateResult(result) && <CertificateSummary data={result.certificate} />}
 
       <button
         type="button"
@@ -139,6 +142,7 @@ function ResultCard({ check, result }: { check: ReportCheck; result: CheckResult
             )}
           </>
         )}
+        {isCertificateResult(result) && <IssuanceHistoryView history={result.certificate.history} />}
         {result.details.length > 0 && (
           <section>
             <h4>Details</h4>

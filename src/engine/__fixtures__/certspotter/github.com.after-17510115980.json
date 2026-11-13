@@ -1,0 +1,112 @@
+[
+	{
+		"id": "17531471500",
+		"tbs_sha256": "0f3363d22930771a6b4ed3b265c1abf38e1299a077567961b471b3f53a352ab1",
+		"cert_sha256": "d98af57e2f20997004dd087e2f0506c2638e9f8d1ff8af6995b317e749670b04",
+		"dns_names": [
+			"github.com",
+			"www.github.com"
+		],
+		"pubkey_sha256": "a5f14e015ec0f5a186d493e86a3ee88cbe4fc5e063cc54327aa5e8ff2cd88159",
+		"issuer": {
+			"friendly_name": "Sectigo",
+			"pubkey_sha256": "6bd9212ce649c659c9cabc6cb60fcffac7a20c29be61fdceb2b5f2168701688d",
+			"name": "C=GB, O=Sectigo Limited, CN=Sectigo Public Server Authentication CA DV R36"
+		},
+		"not_before": "2026-10-02T00:00:00Z",
+		"not_after": "2026-12-30T23:59:59Z",
+		"revoked": false
+	},
+	{
+		"id": "17651135903",
+		"tbs_sha256": "e62c16c0fd25b72268dd11630d4316d2e73e09bd0f1d04caaf82d090174f4d57",
+		"cert_sha256": "f948860125446a8878f709c82d7512ec1b4dfb85fe004aefe7ad33a03b645190",
+		"dns_names": [
+			"*.github.com",
+			"github.com"
+		],
+		"pubkey_sha256": "99e0844d2debca53eda64bb3c365d8531e2159a70f7612009e72ca92c7b5432d",
+		"issuer": {
+			"friendly_name": "Sectigo",
+			"pubkey_sha256": "6bd9212ce649c659c9cabc6cb60fcffac7a20c29be61fdceb2b5f2168701688d",
+			"name": "C=GB, O=Sectigo Limited, CN=Sectigo Public Server Authentication CA DV R36"
+		},
+		"not_before": "2026-10-08T00:00:00Z",
+		"not_after": "2027-01-05T23:59:59Z",
+		"revoked": false
+	},
+	{
+		"id": "17770502620",
+		"tbs_sha256": "62b3fd805674329465bbc193be36b94416946b999977a17c933acee9cdba117c",
+		"cert_sha256": "d0047fd64e27c628fdf51599b5495d13943770595ad4b8ce45730bb9e9ea3ef7",
+		"dns_names": [
+			"garage.github.com",
+			"gist.github.com",
+			"github.com",
+			"www.github.com"
+		],
+		"pubkey_sha256": "80a38e690da8c63f22842354717477a63ed4887de3b888faf222484e5abd9317",
+		"issuer": {
+			"friendly_name": "Sectigo",
+			"pubkey_sha256": "6bd9212ce649c659c9cabc6cb60fcffac7a20c29be61fdceb2b5f2168701688d",
+			"name": "C=GB, O=Sectigo Limited, CN=Sectigo Public Server Authentication CA DV R36"
+		},
+		"not_before": "2026-10-14T00:00:00Z",
+		"not_after": "2027-01-11T23:59:59Z",
+		"revoked": false
+	},
+	{
+		"id": "18023510861",
+		"tbs_sha256": "173fcb587e8dc93abd626408a40a8925417a9ef42881f3377d45680b2303632e",
+		"cert_sha256": "30988ded7e78994b5c3fc151977c0205cb15ee1eb247639751c5334f2b630e32",
+		"dns_names": [
+			"*.github.com",
+			"github.com"
+		],
+		"pubkey_sha256": "3f9e37ec0e9fe5ed8e9ee9cf3b3361455da259e384d5719337dc6c910e77c939",
+		"issuer": {
+			"friendly_name": "Sectigo",
+			"pubkey_sha256": "6526a0bc3ce396d2e47b05c406e0f1233a56fdda55c3526ebef99dd21864cdd6",
+			"name": "C=GB, O=Sectigo Limited, CN=Sectigo Public Server Authentication CA DV E36"
+		},
+		"not_before": "2026-10-28T00:00:00Z",
+		"not_after": "2027-01-25T23:59:59Z",
+		"revoked": false
+	},
+	{
+		"id": "18042520521",
+		"tbs_sha256": "eb49d895903e53b6dc46a5296c9ae5b81c2ca620106e73ee01dad7a133db5dc2",
+		"cert_sha256": "40ad2ec2c992fc5b6193046dc6e6e1e7d28d3d43a60a33f12ea259418ad2e29b",
+		"dns_names": [
+			"*.github.com",
+			"github.com"
+		],
+		"pubkey_sha256": "db08ec8793cae8f140fc64383280e37be30324baef31a997b162648bd57dd090",
+		"issuer": {
+			"friendly_name": "Sectigo",
+			"pubkey_sha256": "6bd9212ce649c659c9cabc6cb60fcffac7a20c29be61fdceb2b5f2168701688d",
+			"name": "C=GB, O=Sectigo Limited, CN=Sectigo Public Server Authentication CA DV R36"
+		},
+		"not_before": "2026-10-29T00:00:00Z",
+		"not_after": "2027-01-26T23:59:59Z",
+		"revoked": false
+	},
+	{
+		"id": "18061278238",
+		"tbs_sha256": "d991ea7571d0f6d5e39f28c3ac5727c6c4f622321d55d6035c199fb611385bfb",
+		"cert_sha256": "7dc4d85cf1e310971225bc9a9257679043a243d70a3cc2a91cc5d389892c2776",
+		"dns_names": [
+			"github.com",
+			"www.github.com"
+		],
+		"pubkey_sha256": "f205969166bc01f033d2486d45846876cb3b89e40fa6ef1277b0e9a4af78795a",
+		"issuer": {
+			"friendly_name": "Sectigo",
+			"pubkey_sha256": "6526a0bc3ce396d2e47b05c406e0f1233a56fdda55c3526ebef99dd21864cdd6",
+			"name": "C=GB, O=Sectigo Limited, CN=Sectigo Public Server Authentication CA DV E36"
+		},
+		"not_before": "2026-10-30T00:00:00Z",
+		"not_after": "2027-01-27T23:59:59Z",
+		"revoked": false
+	}
+]
