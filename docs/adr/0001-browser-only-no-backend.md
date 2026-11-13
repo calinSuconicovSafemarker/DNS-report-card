@@ -1,0 +1,3 @@
+# Browser-only, no backend
+
+The site is a static React app that calls public services (DNS-over-HTTPS, Certificate Transparency, HSTS preload) directly from the visitor's browser, so it can be hosted free on GitHub Pages with nothing to run or secure. The cost: we can only use services that allow cross-origin browser requests, and we can't open TLS connections or read HTTP headers of the target site. That is why the Certificate check reports the *Latest issued certificate* from CT logs rather than the served certificate, why live HSTS headers aren't checked, and why any third-party service that doesn't answer yields **Couldn't check** rather than a Fail. Do not "fix" this by adding a proxy without revisiting this decision.
