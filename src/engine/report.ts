@@ -21,13 +21,12 @@ export interface ReportOptions {
 
 const DEFAULT_CHECK_TIMEOUT_MS = 60_000;
 
-/** One of the six Checks as listed in a Report. `built: false` means it has no implementation yet. */
+/** One of the six Checks as listed in a Report. */
 export interface ReportCheck {
   id: CheckId;
   title: string;
   /** Weight in the Grade before rescaling. */
   weight: number;
-  built: boolean;
 }
 
 /** Events emitted by the Report engine, in order. */
@@ -40,7 +39,7 @@ export type ReportEvent =
   | { type: 'dns-unreachable'; hostname: string; message: string }
   /**
    * The Target was normalized. Lists all six Checks in card order; one
-   * `check` event follows for each Check that is `built`.
+   * `check` event follows for each Check run.
    */
   | { type: 'started'; hostname: string; checks: ReportCheck[] }
   /**
@@ -93,13 +92,12 @@ export async function* runReport(target: string, options: ReportOptions): AsyncG
     zoneApex: () => (zoneApex ??= findZoneApex(dns, hostname, soa)),
   };
   const checks = options.checks ?? registeredChecks;
-  const built = new Set(checks.map((c) => c.id));
   const weightOf = (id: CheckId) => catalog.find((c) => c.id === id)?.weight ?? 0;
 
   yield {
     type: 'started',
     hostname,
-    checks: catalog.map(({ id, title, weight }) => ({ id, title, weight, built: built.has(id) })),
+    checks: catalog.map(({ id, title, weight }) => ({ id, title, weight })),
   };
 
   const pending = new Map(

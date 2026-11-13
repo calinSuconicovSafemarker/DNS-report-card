@@ -1,7 +1,6 @@
 import {
   BadgeCheck,
   ChevronDown,
-  Construction,
   CornerDownRight,
   FileLock,
   Link2,
@@ -31,12 +30,10 @@ const CHECK_ICON: Record<CheckId, LucideIcon> = {
 
 /**
  * One card of the 3×2 grid. Renders, by state:
- * - a "not built yet" placeholder for a Check without an implementation,
  * - a skeleton while the Check runs,
  * - the Check result once it settles.
  */
 export function CheckCard({ check, result }: { check: ReportCheck; result: CheckResult | undefined }) {
-  if (!check.built) return <PlaceholderCard check={check} />;
   if (!result) return <SkeletonCard check={check} />;
   return <ResultCard check={check} result={result} />;
 }
@@ -54,20 +51,6 @@ function CardHead({ check, children }: { check: ReportCheck; children?: ReactNod
       </div>
       {children}
     </header>
-  );
-}
-
-function PlaceholderCard({ check }: { check: ReportCheck }) {
-  return (
-    <article className="card card-placeholder" aria-label={`${check.title}: not built yet`}>
-      <CardHead check={check}>
-        <span className="badge tone-muted">
-          <Construction aria-hidden="true" size={16} />
-          Not built yet
-        </span>
-      </CardHead>
-      <p className="card-note">This check is coming soon. It isn’t part of the Grade yet.</p>
-    </article>
   );
 }
 

@@ -1,4 +1,4 @@
-import { CircleDashed, LoaderCircle } from 'lucide-react';
+import { LoaderCircle } from 'lucide-react';
 import type { ReportCheck } from '../engine/report';
 import type { CheckId, CheckResult } from '../engine/types';
 import { STATUS_LABEL, StatusIcon } from './status';
@@ -17,18 +17,13 @@ export function Scorecard({
       <ul>
         {checks.map((check) => {
           const result = results[check.id];
-          const tone = !check.built ? 'muted' : result ? result.status : 'pending';
+          const tone = result ? result.status : 'pending';
           return (
             <li key={check.id} className={`scorecard-row tone-${tone}`}>
               <span className="scorecard-title">{check.title}</span>
               <span className="scorecard-weight">{check.weight} pts</span>
               <span className="scorecard-status">
-                {!check.built ? (
-                  <>
-                    <CircleDashed aria-hidden="true" size={14} />
-                    Not built yet
-                  </>
-                ) : result ? (
+                {result ? (
                   <>
                     <StatusIcon status={result.status} size={14} />
                     {STATUS_LABEL[result.status]}

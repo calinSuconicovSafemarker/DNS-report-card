@@ -37,7 +37,7 @@ export interface CheckResult {
   aliasNote?: string;
 }
 
-/** What every Check receives. Later tickets add shared lookups here (Preload list...). */
+/** What every Check receives. */
 export interface CheckContext {
   hostname: string;
   /** DoH client: Cloudflare, falling back to Google per query, 4 s timeout each. */

@@ -24,7 +24,7 @@ const couldntCheck: Explanation = {
   howToFix: 'Nothing to fix on your side. Try running the report again in a minute.',
 };
 
-/** What each Check looks at, in one line. Shown under the card heading, including on "not built yet" cards. */
+/** What each Check looks at, in one line. Shown under the card heading. */
 export const checkSummary: Record<CheckId, string> = {
   dnssec: 'Whether your DNS answers are signed, so they can’t be forged.',
   caa: 'Which certificate authorities may issue certificates for this name.',

@@ -7,7 +7,7 @@ import { httpsRecordCheck } from './checks/httpsRecord';
 /** Engine tests run the HTTPS record Check alone, so other Checks' lookups don't change their outcome. */
 const onlyHttpsRecord = [httpsRecordCheck];
 
-/** A stand-in Check with a fixed outcome, for grading tests (the real Checks arrive in later tickets). */
+/** A stand-in Check with a fixed outcome, for grading tests. */
 function fixed(id: CheckId, status: Status): Check {
   return {
     id,
@@ -326,15 +326,6 @@ describe('Grade', () => {
     ).toEqual({ score: 54, grade: 'D', gradedCount: 3, totalCount: 6 });
   });
 
-  it('leaves Checks that are not built yet out of the Grade', async () => {
-    expect(await graded(fixed('dnssec', 'pass'), fixed('nameservers', 'fail'))).toEqual({
-      score: 56,
-      grade: 'D',
-      gradedCount: 2,
-      totalCount: 6,
-    });
-  });
-
   it("is absent when no Check could be graded", async () => {
     const r = await report('bbc.co.uk');
     expect(r.grading).toBeNull();
@@ -348,19 +339,19 @@ describe('Report events', () => {
     expect(events).toEqual(['started', 'check', 'graded']);
   });
 
-  it('lists all six Checks in card order with their weights, marking the ones not built yet', async () => {
+  it('lists all six Checks in card order with their weights', async () => {
     const events = runReport('cloudflare.com', { fetch: fakeFetch() });
     const first = (await events.next()).value;
     expect(first).toEqual({
       type: 'started',
       hostname: 'cloudflare.com',
       checks: [
-        { id: 'dnssec', title: 'DNSSEC', weight: 25, built: true },
-        { id: 'caa', title: 'CAA', weight: 15, built: true },
-        { id: 'nameservers', title: 'Nameservers', weight: 20, built: true },
-        { id: 'https-record', title: 'HTTPS record', weight: 10, built: true },
-        { id: 'certificate', title: 'Certificate', weight: 20, built: true },
-        { id: 'hsts-preload', title: 'HSTS preload', weight: 10, built: true },
+        { id: 'dnssec', title: 'DNSSEC', weight: 25 },
+        { id: 'caa', title: 'CAA', weight: 15 },
+        { id: 'nameservers', title: 'Nameservers', weight: 20 },
+        { id: 'https-record', title: 'HTTPS record', weight: 10 },
+        { id: 'certificate', title: 'Certificate', weight: 20 },
+        { id: 'hsts-preload', title: 'HSTS preload', weight: 10 },
       ],
     });
   });
