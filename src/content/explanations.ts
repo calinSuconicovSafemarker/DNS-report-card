@@ -48,12 +48,6 @@ const explanations: Partial<Record<CheckId, CheckCopy>> = {
         'Copy the DS record (or the key details) from your DNS provider’s DNSSEC settings and add it at your registrar, where you bought the domain. If your DNS provider is also your registrar, this is often a single “enable DNSSEC” switch.',
       example: 'example.com. 3600 IN DS 2371 13 2 32996839a6d808afe3eb4a795a0e6a7a39a76fc52ff228b22b76f6d63826f2b9',
     },
-    fail: {
-      whatThisMeans:
-        'Your Zone apex does not use DNSSEC. DNS answers for your domain are not signed, so an attacker who can tamper with DNS traffic or poison a resolver’s cache could send your visitors to a different server without anyone noticing.',
-      howToFix:
-        'First, turn on DNSSEC at your DNS provider (where your DNS records are managed); it will sign your zone and show you a DS record. Then add that DS record at your registrar (where you bought the domain). Many providers do both for you when they are also your registrar. Check again after an hour or so.',
-    },
   },
   caa: {
     pass: {
@@ -157,6 +151,12 @@ const reasonExplanations: { [C in keyof CheckReasons]?: Partial<Record<CheckReas
     },
   },
   dnssec: {
+    none: {
+      whatThisMeans:
+        'Your Zone apex does not use DNSSEC, so DNS answers for your domain are not signed. This is common: many large sites, including Google and GitHub, skip it and rely on HTTPS, which already stops visitors from trusting a fake server. DNSSEC adds an extra layer against forged DNS answers.',
+      howToFix:
+        'Optional but worthwhile if your DNS provider makes it easy. Turn on DNSSEC at your DNS provider (where your DNS records are managed); it will sign your zone and show you a DS record. Then add that DS record at your registrar (where you bought the domain). Many providers do both with one switch. Check again after an hour or so.',
+    },
     'not-validated': {
       whatThisMeans:
         'Your Zone apex is signed and the parent zone has a DS record for it, but resolvers did not report your answers as validated. This usually means the signing algorithm or DS digest type is one resolvers don’t support, so they treat your domain as unsigned and your answers get no protection.',

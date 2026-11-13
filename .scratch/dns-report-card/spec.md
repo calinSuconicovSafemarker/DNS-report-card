@@ -53,7 +53,7 @@ DNS Report Card is a free, static website. The user types a domain or URL and ge
 26. As a domain owner, I want to know whether my Zone apex is DNSSEC-signed and validated (DS at the parent, DNSKEY present, resolver reports validated), so that I know whether my DNS answers can be forged.
 27. As a domain owner who published DNSKEY but no DS, I want a Warning explaining that the setup is only half done and that I need to add the DS record at my registrar, so that I can finish it.
 28. As a domain owner whose DNSSEC is broken (answers fail validation but resolve with checking disabled), I want a Fail that explains my domain may be unreachable for validating resolvers, so that I treat it as urgent.
-29. As a domain owner with no DNSSEC, I want a Fail with steps to enable it at my DNS provider and registrar, so that I know where to start.
+29. As a domain owner with no DNSSEC, I want a Warning (not a Fail, since many large sites skip it) with steps to enable it at my DNS provider and registrar, so that I know where to start.
 
 ### CAA
 30. As a domain owner, I want to see which certificate authorities are allowed to issue certificates for my Hostname (found by walking up the tree), so that I know who can issue for me.
@@ -115,7 +115,7 @@ DNS Report Card is a free, static website. The user types a domain or URL and ge
 
 | Check | Pass | Warning | Fail |
 |---|---|---|---|
-| DNSSEC (Zone apex) | DS at parent + DNSKEY + resolver reports validated | DNSKEY but no DS; or DS + DNSKEY but the resolver doesn't report the answer as validated (`not-validated`) | None, or broken (SERVFAIL normally, resolves with checking disabled) |
+| DNSSEC (Zone apex) | DS at parent + DNSKEY + resolver reports validated | No DNSSEC at all (common on large sites, so not a Fail); DNSKEY but no DS; or DS + DNSKEY but the resolver doesn't report the answer as validated (`not-validated`) | Broken (SERVFAIL normally, resolves with checking disabled) |
 | CAA (tree walk from Hostname) | CAA set with ≥1 `issue`/`issuewild` | — | No CAA anywhere up the tree, or a CAA set that names no certificate authority (e.g. `iodef` only), each with its own copy |
 | Nameservers (Zone apex) | ≥2 NS, ≥2 provider domains, ≥2 /24 networks | ≥2 NS but one provider or one /24 | <2 NS |
 | HTTPS record (Hostname) | Record present | Absent | — |

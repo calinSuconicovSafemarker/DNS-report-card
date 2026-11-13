@@ -30,7 +30,8 @@ export const dnssecCheck: Check = {
     });
 
     if (broken && dnskey.rcode === NOERROR) return result('fail', 'broken', 'DNSSEC is broken: answers fail validation');
-    if (dnskeyRecords.length === 0) return result('fail', 'none', 'DNSSEC is not enabled');
+    // Unsigned is a Warning, not a Fail: most large sites skip DNSSEC and rely on HTTPS instead.
+    if (dnskeyRecords.length === 0) return result('warning', 'none', 'DNSSEC is not enabled');
     if (dsRecords.length === 0) return result('warning', 'no-ds', 'Signed, but no DS record at the registrar');
     if (!validated.authenticated) return result('warning', 'not-validated', 'Signed, but resolvers could not validate it');
     return result('pass', 'validated', 'Signed and validated');
