@@ -1,15 +1,23 @@
 import { useCallback, useRef, useState } from 'react';
-import { runReport } from '../engine/report';
+import { runReport, type ReportCheck } from '../engine/report';
 import type { Grading } from '../engine/grade';
 import type { CheckId, CheckResult } from '../engine/types';
 
+/**
+ * A Report-level outcome: the whole Report stops with a single message, no
+ * cards and no Grade. Add a variant here for each new Report-level event
+ * (e.g. NXDOMAIN, DNS unreachable) and its copy in `Outcome.tsx`.
+ */
+export type ReportOutcome = { kind: 'invalid-target'; message: string };
+
 export type ReportState =
   | { phase: 'idle' }
-  | { phase: 'invalid-target'; message: string }
+  | { phase: 'outcome'; outcome: ReportOutcome }
   | {
       phase: 'running' | 'done';
       hostname: string;
-      checks: { id: CheckId; title: string }[];
+      /** All six Checks, in card order. */
+      checks: ReportCheck[];
       results: Partial<Record<CheckId, CheckResult>>;
       grading: Grading | null;
     };
@@ -29,7 +37,7 @@ export function useReport(onHostname: (hostname: string) => void) {
         if (id !== runId.current) return;
         switch (event.type) {
           case 'invalid-target':
-            setState({ phase: 'invalid-target', message: event.message });
+            setState({ phase: 'outcome', outcome: { kind: 'invalid-target', message: event.message } });
             break;
           case 'started':
             onHostname(event.hostname);

@@ -8,7 +8,7 @@ export interface Grading {
   grade: Grade;
   /** Number of Check results that counted toward the Score. */
   gradedCount: number;
-  /** Number of Checks in the Report. */
+  /** Number of Checks in the Report (always six); "Based on gradedCount of totalCount checks". */
   totalCount: number;
 }
 
@@ -19,7 +19,10 @@ const POINTS: Partial<Record<Status, number>> = { pass: 1, warning: 0.5, fail: 0
  * check and Info are excluded and the remaining weights rescaled.
  * Returns null when nothing could be graded.
  */
-export function gradeResults(results: { result: CheckResult; weight: number }[]): Grading | null {
+export function gradeResults(
+  results: { result: CheckResult; weight: number }[],
+  totalCount: number,
+): Grading | null {
   let earned = 0;
   let possible = 0;
   let gradedCount = 0;
@@ -32,7 +35,7 @@ export function gradeResults(results: { result: CheckResult; weight: number }[])
   }
   if (possible === 0) return null;
   const score = Math.round((earned / possible) * 100);
-  return { score, grade: toGrade(score), gradedCount, totalCount: results.length };
+  return { score, grade: toGrade(score), gradedCount, totalCount };
 }
 
 function toGrade(score: number): Grade {

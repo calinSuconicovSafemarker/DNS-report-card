@@ -22,8 +22,18 @@ const couldntCheck: Explanation = {
   howToFix: 'Nothing to fix on your side. Try running the report again in a minute.',
 };
 
-/** Every CheckId must have an entry; add one here when you add a Check. */
-const explanations: Record<CheckId, CheckCopy> = {
+/** What each Check looks at, in one line. Shown under the card heading, including on "not built yet" cards. */
+export const checkSummary: Record<CheckId, string> = {
+  dnssec: 'Whether your DNS answers are signed, so they can’t be forged.',
+  caa: 'Which certificate authorities may issue certificates for this name.',
+  nameservers: 'Whether your DNS is spread across providers and networks.',
+  'https-record': 'Whether browsers learn up front how to connect fast and privately.',
+  certificate: 'The latest certificate issued for this name, from public logs.',
+  'hsts-preload': 'Whether browsers are built to always use HTTPS for this name.',
+};
+
+/** Add an entry here when you build a Check. */
+const explanations: Partial<Record<CheckId, CheckCopy>> = {
   'https-record': {
     pass: {
       whatThisMeans:
@@ -40,5 +50,5 @@ const explanations: Record<CheckId, CheckCopy> = {
 };
 
 export function explanationFor(check: CheckId, status: Status): Explanation | undefined {
-  return explanations[check][status] ?? (status === 'couldnt-check' ? couldntCheck : undefined);
+  return explanations[check]?.[status] ?? (status === 'couldnt-check' ? couldntCheck : undefined);
 }

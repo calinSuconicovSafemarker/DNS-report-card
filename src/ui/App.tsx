@@ -1,17 +1,14 @@
+import { RotateCw, Search, ShieldCheck } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { explanationFor } from '../content/explanations';
-import type { CheckResult, Status } from '../engine/types';
-import { useReport } from './useReport';
+import type { Status } from '../engine/types';
+import { CheckCard } from './CheckCard';
+import { Scorecard } from './Scorecard';
+import { GradeRing } from './GradeRing';
+import { Outcome } from './Outcome';
+import { STATUS_LABEL, StatusIcon } from './status';
+import { useReport, type ReportState } from './useReport';
 
 const QUERY_PARAM = 'd';
-
-const STATUS_LABEL: Record<Status, string> = {
-  pass: 'Pass',
-  warning: 'Warning',
-  fail: 'Fail',
-  'couldnt-check': 'Couldn’t check',
-  info: 'Info',
-};
 
 function readTargetFromUrl(): string {
   return new URLSearchParams(window.location.search).get(QUERY_PARAM) ?? '';
@@ -58,108 +55,142 @@ export function App() {
     void start(input);
   };
 
+  const runAgain = (hostname: string) => {
+    urlMode.current = 'replace';
+    void start(hostname);
+  };
+
   return (
-    <main className="page">
+    <div className="page">
       <header className="masthead">
-        <h1>DNS Report Card</h1>
-        <p className="tagline">A plain-English security check of your domain, using only public lookups from your browser.</p>
+        <p className="brand">
+          <span className="brand-mark">
+            <ShieldCheck aria-hidden="true" size={18} />
+          </span>
+          DNS Report Card
+        </p>
+        <h1>How secure is your domain’s setup?</h1>
+        <p className="tagline">
+          A plain-English check of DNSSEC, certificates and more, using only public lookups made from your browser.
+        </p>
+
+        <form className="search" onSubmit={onSubmit} role="search">
+          <label htmlFor="target" className="visually-hidden">
+            Domain or web address
+          </label>
+          <Search aria-hidden="true" size={20} className="search-icon" />
+          <input
+            id="target"
+            type="text"
+            inputMode="url"
+            autoComplete="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            placeholder="example.com"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
+          <button type="submit" className="button-primary">
+            Check
+          </button>
+        </form>
       </header>
 
-      <form className="search" onSubmit={onSubmit} role="search">
-        <label htmlFor="target" className="visually-hidden">
-          Domain or web address
-        </label>
-        <input
-          id="target"
-          type="text"
-          inputMode="url"
-          autoComplete="off"
-          autoCapitalize="off"
-          spellCheck={false}
-          placeholder="example.com"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-        />
-        <button type="submit">Check</button>
-      </form>
+      <main>
+        {state.phase === 'outcome' && <Outcome outcome={state.outcome} />}
+        {(state.phase === 'running' || state.phase === 'done') && <Report state={state} onRunAgain={runAgain} />}
+      </main>
 
-      {state.phase === 'invalid-target' && (
-        <p className="notice" role="alert">
-          {state.message}
-        </p>
-      )}
-
-      {(state.phase === 'running' || state.phase === 'done') && (
-        <section className="report" aria-live="polite" aria-busy={state.phase === 'running'}>
-          <div className="grade">
-            {state.phase === 'running' ? (
-              <span className="grade-letter pending">Calculating&hellip;</span>
-            ) : state.grading ? (
-              <>
-                <span className="grade-letter">{state.grading.grade}</span>
-                <span className="grade-score">{state.grading.score} / 100</span>
-              </>
-            ) : (
-              <span className="grade-letter pending">No grade</span>
-            )}
-            <span className="grade-host">{state.hostname}</span>
-          </div>
-
-          <div className="cards">
-            {state.checks.map((check) => {
-              const result = state.results[check.id];
-              return result ? (
-                <CheckCard key={check.id} title={check.title} result={result} />
-              ) : (
-                <article key={check.id} className="card loading">
-                  <h2>{check.title}</h2>
-                  <p>Checking&hellip;</p>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      )}
-    </main>
+      <footer className="footer">
+        <p>Passive, public lookups only. Nothing is stored and nothing is tracked.</p>
+      </footer>
+    </div>
   );
 }
 
-function CheckCard({ title, result }: { title: string; result: CheckResult }) {
-  const copy = explanationFor(result.check, result.status);
+const TALLY_ORDER: Status[] = ['pass', 'warning', 'fail', 'couldnt-check', 'info'];
+
+function Report({
+  state,
+  onRunAgain,
+}: {
+  state: Extract<ReportState, { phase: 'running' | 'done' }>;
+  onRunAgain: (hostname: string) => void;
+}) {
+  const settled = state.phase === 'done';
+  const { grading } = state;
+  const results = Object.values(state.results);
+  const tally = TALLY_ORDER.map((status) => ({
+    status,
+    count: results.filter((r) => r.status === status).length,
+  })).filter((t) => t.count > 0);
+
   return (
-    <article className={`card status-${result.status}`}>
-      <h2>{title}</h2>
-      <p className="status">{STATUS_LABEL[result.status]}</p>
-      <p className="verdict">{result.verdict}</p>
-      <p className="checked-name">Checked on {result.checkedName}</p>
-      {result.aliasNote && <p className="alias-note">{result.aliasNote}</p>}
-      {copy && (
-        <>
-          <h3>What this means</h3>
-          <p>{copy.whatThisMeans}</p>
-          {copy.howToFix && (
-            <>
-              <h3>How to fix</h3>
-              <p>{copy.howToFix}</p>
-              {copy.example && (
-                <pre>
-                  <code>{copy.example}</code>
-                </pre>
-              )}
-            </>
+    <section className="report" aria-labelledby="report-title" aria-busy={!settled}>
+      <div className="summary">
+        <GradeRing grading={grading} settled={settled} />
+        <div className="summary-text">
+          <p className="eyebrow">Report for</p>
+          <h2 id="report-title" className="hostname">
+            {state.hostname}
+          </h2>
+          <p className="summary-line" aria-live="polite">
+            {!settled
+              ? 'Running checks…'
+              : grading
+                ? gradeSentence(grading.grade)
+                : 'None of the checks could be graded this time.'}
+          </p>
+          {tally.length > 0 && (
+            <ul className="tally" aria-label="Results so far">
+              {tally.map(({ status, count }) => (
+                <li key={status} className={`tally-item tone-${status}`}>
+                  <StatusIcon status={status} size={14} />
+                  <span>
+                    {count} {STATUS_LABEL[status]}
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
-        </>
-      )}
-      {result.details.length > 0 && (
-        <dl className="details">
-          {result.details.map((d, i) => (
-            <div key={i}>
-              <dt>{d.label}</dt>
-              <dd>{d.value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-    </article>
+          {settled && grading && grading.gradedCount < grading.totalCount && (
+            <p className="based-on">
+              Based on {grading.gradedCount} of {grading.totalCount} checks
+            </p>
+          )}
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={() => onRunAgain(state.hostname)}
+            disabled={!settled}
+          >
+            <RotateCw aria-hidden="true" size={16} />
+            Run again
+          </button>
+        </div>
+        <Scorecard checks={state.checks} results={state.results} />
+      </div>
+
+      <div className="cards">
+        {state.checks.map((check) => (
+          <CheckCard key={check.id} check={check} result={state.results[check.id]} />
+        ))}
+      </div>
+    </section>
   );
+}
+
+function gradeSentence(grade: string): string {
+  switch (grade) {
+    case 'A':
+      return 'Excellent. This domain follows good practice.';
+    case 'B':
+      return 'Good, with a few things worth improving.';
+    case 'C':
+      return 'Fair. Several things are worth fixing.';
+    case 'D':
+      return 'Needs work. Start with the cards marked Fail or Warning.';
+    default:
+      return 'Poor. Several important protections are missing.';
+  }
 }

@@ -1,7 +1,7 @@
 import type { DnsClient } from './dns';
 
-/** Identifier of a Check. Later tickets extend this union: 'dnssec' | 'caa' | 'nameservers' | 'certificate' | 'hsts-preload'. */
-export type CheckId = 'https-record';
+/** Identifier of one of the six Checks (see `checks/index.ts` for titles, weights and card order). */
+export type CheckId = 'dnssec' | 'caa' | 'nameservers' | 'https-record' | 'certificate' | 'hsts-preload';
 
 export type Status = 'pass' | 'warning' | 'fail' | 'couldnt-check' | 'info';
 
@@ -31,10 +31,8 @@ export interface CheckContext {
   fetch: typeof fetch;
 }
 
+/** An implemented Check. Its title and weight live in the catalog (`checks/index.ts`). */
 export interface Check {
   id: CheckId;
-  title: string;
-  /** Weight in the Grade (spec: Grading). */
-  weight: number;
   run(ctx: CheckContext): Promise<CheckResult>;
 }
