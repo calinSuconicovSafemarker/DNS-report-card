@@ -36,6 +36,22 @@ export const checkSummary: Record<CheckId, string> = {
 
 /** Add an entry here when you build a Check. */
 const explanations: Partial<Record<CheckId, CheckCopy>> = {
+  caa: {
+    pass: {
+      whatThisMeans:
+        'Your domain publishes a CAA record listing the certificate authorities allowed to issue certificates for this name. Any other authority must refuse, which makes a mistaken or fraudulent certificate much harder to get. If the record was found on a parent name, it applies here too.',
+      howToFix:
+        'Nothing to fix. If you switch certificate provider, add the new authority to your CAA record first, or its certificates will be refused.',
+    },
+    fail: {
+      whatThisMeans:
+        'No CAA record was found for this name or any name above it, so any certificate authority in the world may issue a certificate for it. A CAA record lets you say which ones may.',
+      howToFix:
+        'Find out which certificate authority issues your certificates (your hosting provider or CDN can tell you), then add a CAA record at your domain in your DNS settings naming it. Add one "issue" line per authority you use. An optional "iodef" line gives an address where authorities can report refused requests.',
+      example:
+        'example.com. 3600 IN CAA 0 issue "letsencrypt.org"\nexample.com. 3600 IN CAA 0 iodef "mailto:security@example.com"',
+    },
+  },
   'https-record': {
     pass: {
       whatThisMeans:

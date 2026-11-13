@@ -349,7 +349,7 @@ describe('Report events', () => {
       hostname: 'cloudflare.com',
       checks: [
         { id: 'dnssec', title: 'DNSSEC', weight: 25, built: false },
-        { id: 'caa', title: 'CAA', weight: 15, built: false },
+        { id: 'caa', title: 'CAA', weight: 15, built: true },
         { id: 'nameservers', title: 'Nameservers', weight: 20, built: true },
         { id: 'https-record', title: 'HTTPS record', weight: 10, built: true },
         { id: 'certificate', title: 'Certificate', weight: 20, built: false },
