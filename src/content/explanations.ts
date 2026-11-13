@@ -55,6 +55,22 @@ const explanations: Partial<Record<CheckId, CheckCopy>> = {
         'First, turn on DNSSEC at your DNS provider (where your DNS records are managed); it will sign your zone and show you a DS record. Then add that DS record at your registrar (where you bought the domain). Many providers do both for you when they are also your registrar. Check again after an hour or so.',
     },
   },
+  caa: {
+    pass: {
+      whatThisMeans:
+        'Your domain publishes a CAA record listing the certificate authorities allowed to issue certificates for this name. Any other authority must refuse, which makes a mistaken or fraudulent certificate much harder to get. If the record was found on a parent name, it applies here too.',
+      howToFix:
+        'Nothing to fix. If you switch certificate provider, add the new authority to your CAA record first, or its certificates will be refused.',
+    },
+    fail: {
+      whatThisMeans:
+        'No CAA record was found for this name or any name above it, so any certificate authority in the world may issue a certificate for it. A CAA record lets you say which ones may.',
+      howToFix:
+        'Find out which certificate authority issues your certificates (your hosting provider or CDN can tell you), then add a CAA record at your domain in your DNS settings naming it. Add one "issue" line per authority you use. An optional "iodef" line gives an address where authorities can report refused requests.',
+      example:
+        'example.com. 3600 IN CAA 0 issue "letsencrypt.org"\nexample.com. 3600 IN CAA 0 iodef "mailto:security@example.com"',
+    },
+  },
   'https-record': {
     pass: {
       whatThisMeans:
@@ -80,6 +96,26 @@ const explanations: Partial<Record<CheckId, CheckCopy>> = {
         'Serve every page over HTTPS and redirect HTTP to HTTPS. Then send the Strict-Transport-Security header from your domain (and every subdomain) with a max-age of at least one year, includeSubDomains and preload. Once it is in place, submit your domain to the Preload list. Only do this when every subdomain supports HTTPS: getting removed from the list takes months.',
       example: 'Strict-Transport-Security: max-age=63072000; includeSubDomains; preload',
       link: { label: 'Submit your domain at hstspreload.org', href: 'https://hstspreload.org/' },
+    },
+  },
+  nameservers: {
+    pass: {
+      whatThisMeans:
+        'Your domain has at least two nameservers, run by more than one provider and sitting in more than one network. If one provider has an outage or one network becomes unreachable, the others keep answering, so your domain stays reachable.',
+    },
+    warning: {
+      whatThisMeans:
+        'Your domain has more than one nameserver, but they all belong to one provider or all sit in the same /24 network. That is a single point of failure: one provider outage, one misconfiguration or one network problem can take every nameserver down at once, and your domain then disappears from the internet.',
+      howToFix:
+        'Add nameservers from a second, independent DNS provider (or on a different network) and keep both providers serving the same records. Many DNS providers support this as "secondary DNS", copying your zone automatically. Then list the nameservers from both providers at your registrar.',
+      example: 'example.com. 86400 IN NS ns1.provider-one.example.\nexample.com. 86400 IN NS ns1.provider-two.example.',
+    },
+    fail: {
+      whatThisMeans:
+        'Your domain has fewer than two nameservers. If that one server goes down or becomes unreachable, nobody can look up your domain: your website, email and everything else on it stop working.',
+      howToFix:
+        'Add at least one more nameserver, ideally from a different provider and on a different network, and serve the same records from it. Then list all your nameservers at your registrar, so the delegation matches.',
+      example: 'example.com. 86400 IN NS ns1.provider-one.example.\nexample.com. 86400 IN NS ns1.provider-two.example.',
     },
   },
 };

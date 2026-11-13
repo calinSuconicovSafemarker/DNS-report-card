@@ -1,0 +1,1 @@
+{"Status":0,"TC":false,"RD":true,"RA":true,"AD":false,"CD":false,"Question":[{"name":"linuxfromscratch.org","type":2}],"Answer":[{"name":"linuxfromscratch.org","type":2,"TTL":900,"data":"ns1.linuxfromscratch.org."},{"name":"linuxfromscratch.org","type":2,"TTL":900,"data":"ns2.linuxfromscratch.org."}]}

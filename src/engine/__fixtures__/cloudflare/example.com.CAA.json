@@ -1,0 +1,1 @@
+{"Status":0,"TC":false,"RD":true,"RA":true,"AD":true,"CD":false,"Question":[{"name":"example.com","type":257}],"Authority":[{"name":"example.com","type":6,"TTL":1800,"data":"elliott.ns.cloudflare.com. dns.cloudflare.com. 2420077714 10000 2400 604800 1800"}]}
