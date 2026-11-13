@@ -17,6 +17,7 @@ export interface FakeFetchOptions {
  * Fixture layout: `__fixtures__/<service>/<file>`.
  * - `cloudflare/<name>.<TYPE>.json` answers
  *   `https://cloudflare-dns.com/dns-query?name=<name>&type=<TYPE>`.
+ *   A query with `cd=1` prefers `<name>.<TYPE>.cd.json` when recorded.
  *   Like the real API, it returns 400 when `Accept: application/dns-json` is missing.
  * - `google/<name>.<TYPE>.json` answers `https://dns.google/resolve?name=<name>&type=<TYPE>`.
  *   Like the browser, it fails with a network error when the request carries
@@ -50,18 +51,21 @@ export function fakeFetch(options: FakeFetchOptions = {}): typeof fetch {
     if (service && options.hang?.includes(service)) return hang(init?.signal);
     if (service && options.down?.includes(service)) throw new TypeError(`fakeFetch: ${service} is down`);
 
-    const key = `${url.searchParams.get('name')}.${url.searchParams.get('type')}.json`;
+    const base = `${url.searchParams.get('name')}.${url.searchParams.get('type')}`;
+    // A checking-disabled query prefers `<name>.<TYPE>.cd.json`, then falls back to the plain recording.
+    const keys = url.searchParams.get('cd') === '1' ? [`${base}.cd.json`, `${base}.json`] : [`${base}.json`];
+    const lookup = (dir: Map<string, string>) => keys.map((k) => dir.get(k)).find((b) => b !== undefined);
     const headers = new Headers(init?.headers);
 
     if (service === 'cloudflare') {
       if (headers.get('accept') !== 'application/dns-json') return new Response('Bad Request', { status: 400 });
-      const body = fixtures.cloudflare.get(key);
+      const body = lookup(fixtures.cloudflare);
       if (body !== undefined) return json(body);
     }
 
     if (service === 'google') {
       if ([...headers.keys()].length > 0) throw new TypeError('fakeFetch: CORS preflight to dns.google failed');
-      const body = fixtures.google.get(key);
+      const body = lookup(fixtures.google);
       if (body !== undefined) return json(body);
     }
 

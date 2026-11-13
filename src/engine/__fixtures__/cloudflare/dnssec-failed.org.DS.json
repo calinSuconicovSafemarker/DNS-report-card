@@ -1,0 +1,1 @@
+{"Status":0,"TC":false,"RD":true,"RA":true,"AD":true,"CD":false,"Question":[{"name":"dnssec-failed.org","type":43}],"Answer":[{"name":"dnssec-failed.org","type":43,"TTL":3600,"data":"42069 13 2 62726f6b656e20636861696e206f662074727573742073656e642068656c7021"}]}

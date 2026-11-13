@@ -1,0 +1,1 @@
+{"Status":0,"TC":false,"RD":true,"RA":true,"AD":false,"CD":false,"Question":[{"name":"no-ds.extended-dns-errors.com","type":6}],"Answer":[{"name":"no-ds.extended-dns-errors.com","type":6,"TTL":600,"data":"ns1.no-ds.extended-dns-errors.com. hostmaster.no-ds.extended-dns-errors.com. 20260630 21600 3600 604800 86400"}]}

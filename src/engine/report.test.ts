@@ -104,7 +104,7 @@ describe('DNS providers', () => {
   it('gives up on a provider after 4 s and moves on to the next', async () => {
     vi.useFakeTimers();
     try {
-      const pending = collectReport('cloudflare.com', { fetch: fakeFetch({ hang: ['cloudflare'] }) });
+      const pending = collectReport('cloudflare.com', { fetch: fakeFetch({ hang: ['cloudflare'] }), checks: onlyHttpsRecord });
       let settled = false;
       void pending.then(() => (settled = true));
       await vi.advanceTimersByTimeAsync(3900);
@@ -348,9 +348,9 @@ describe('Report events', () => {
       type: 'started',
       hostname: 'cloudflare.com',
       checks: [
-        { id: 'dnssec', title: 'DNSSEC', weight: 25, built: false },
-        { id: 'caa', title: 'CAA', weight: 15, built: false },
-        { id: 'nameservers', title: 'Nameservers', weight: 20, built: false },
+        { id: 'dnssec', title: 'DNSSEC', weight: 25, built: true },
+        { id: 'caa', title: 'CAA', weight: 15, built: true },
+        { id: 'nameservers', title: 'Nameservers', weight: 20, built: true },
         { id: 'https-record', title: 'HTTPS record', weight: 10, built: true },
         { id: 'certificate', title: 'Certificate', weight: 20, built: true },
         { id: 'hsts-preload', title: 'HSTS preload', weight: 10, built: true },

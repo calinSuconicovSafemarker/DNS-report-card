@@ -1,0 +1,1 @@
+{"Status":0,"TC":false,"RD":true,"RA":true,"AD":false,"CD":false,"Question":[{"name":"google.com.","type":6}],"Answer":[{"name":"google.com.","type":6,"TTL":4,"data":"ns1.google.com. dns-admin.google.com. 1019971645 900 900 1800 60"}]}

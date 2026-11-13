@@ -1,0 +1,1 @@
+{"Status":0,"TC":false,"RD":true,"RA":true,"AD":false,"CD":true,"Question":[{"name":"dnssec-failed.org","type":6}],"Answer":[{"name":"dnssec-failed.org","type":6,"TTL":300,"data":"dns101.comcast.org. dnsadmin.comcast.net. 2010102615 900 180 604800 7200"}],"Comment":["EDE(9): DNSKEY Missing no SEP matching the DS found for dnssec-failed.org."]}

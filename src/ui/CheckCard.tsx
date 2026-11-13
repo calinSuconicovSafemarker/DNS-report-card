@@ -87,7 +87,7 @@ function SkeletonCard({ check }: { check: ReportCheck }) {
 function ResultCard({ check, result }: { check: ReportCheck; result: CheckResult }) {
   const [open, setOpen] = useState(false);
   const bodyId = useId();
-  const copy = explanationFor(result.check, result.status);
+  const copy = explanationFor(result.check, result.status, result.reason);
 
   return (
     <article className={`card card-result tone-${result.status}`} data-open={open}>
