@@ -1,0 +1,18 @@
+// Copyright 2012 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+// TRIMMED FIXTURE for DNS Report Card tests: a handful of entries in the
+// real file's format (the real list is about 10 MB). Like the real file, it
+// starts with // comment lines, so it is not strict JSON until they are stripped.
+{
+  // Entries also carry comments in between.
+  "pinsets": [],
+  "entries": [
+    // Google-owned domains.
+    { "name": "google", "policy": "public-suffix", "mode": "force-https", "include_subdomains": true },
+    { "name": "github.com", "policy": "custom", "mode": "force-https", "include_subdomains": true },
+    { "name": "cloudflare.com", "policy": "custom", "mode": "force-https" },
+    { "name": "pinned-only.example", "policy": "test", "include_subdomains_for_pinning": true, "pins": "test" }
+  ]
+}

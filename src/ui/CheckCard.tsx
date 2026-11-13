@@ -128,6 +128,13 @@ function ResultCard({ check, result }: { check: ReportCheck; result: CheckResult
                 <h4>How to fix</h4>
                 <p>{copy.howToFix}</p>
                 {copy.example && <CopyableCode code={copy.example} />}
+                {copy.link && (
+                  <p>
+                    <a href={copy.link.href} target="_blank" rel="noreferrer">
+                      {copy.link.label}
+                    </a>
+                  </p>
+                )}
               </section>
             )}
           </>

@@ -1,7 +1,8 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { PRELOAD_LIST_URL } from '../checks/hstsPreload';
 
-export type FakeService = 'cloudflare' | 'google';
+export type FakeService = 'cloudflare' | 'google' | 'preload';
 
 export interface FakeFetchOptions {
   /** Services that fail like a network error (connection refused, CORS block). */
@@ -21,7 +22,10 @@ export interface FakeFetchOptions {
  *   Like the browser, it fails with a network error when the request carries
  *   any custom header, because Google's CORS preflight has no CORS headers.
  *
- * Later services (Cert Spotter, crt.sh, Preload list) add a branch here.
+ * - `preload/transport_security_state_static.json` answers the Preload list URL on jsDelivr
+ *   (a trimmed copy that keeps the real file's `//` comment lines).
+ *
+ * Later services (Cert Spotter, crt.sh) add a branch here.
  * Any URL without a fixture rejects like a network error, so unexpected
  * requests show up as test failures (or Couldn't check), never as silent passes.
  */
@@ -29,6 +33,7 @@ export function fakeFetch(options: FakeFetchOptions = {}): typeof fetch {
   const fixtures: Record<FakeService, Map<string, string>> = {
     cloudflare: loadDir('cloudflare'),
     google: loadDir('google'),
+    preload: loadDir('preload'),
   };
 
   return async (input, init) => {
@@ -52,6 +57,8 @@ export function fakeFetch(options: FakeFetchOptions = {}): typeof fetch {
       if (body !== undefined) return json(body);
     }
 
+    if (service === 'preload') return new Response(fixtures.preload.get('transport_security_state_static.json'));
+
     throw new TypeError(`fakeFetch: no fixture for ${url.href}`);
   };
 }
@@ -59,6 +66,7 @@ export function fakeFetch(options: FakeFetchOptions = {}): typeof fetch {
 function serviceFor(url: URL): FakeService | null {
   if (url.origin === 'https://cloudflare-dns.com' && url.pathname === '/dns-query') return 'cloudflare';
   if (url.origin === 'https://dns.google' && url.pathname === '/resolve') return 'google';
+  if (url.href === PRELOAD_LIST_URL) return 'preload';
   return null;
 }
 

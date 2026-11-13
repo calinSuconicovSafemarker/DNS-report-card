@@ -11,6 +11,8 @@ export interface Explanation {
   howToFix?: string;
   /** Optional copy-paste example for the fix. */
   example?: string;
+  /** Optional link shown after the fix, e.g. a submission site. */
+  link?: { label: string; href: string };
 }
 
 /** Statuses a Check can produce. Couldn't check uses the shared copy below unless a Check overrides it. */
@@ -45,6 +47,20 @@ const explanations: Partial<Record<CheckId, CheckCopy>> = {
       howToFix:
         'Many CDNs and DNS providers add an HTTPS record automatically, often as a setting such as "HTTP/3" or "HTTPS records". If yours does not, add an HTTPS record at this name in your DNS settings that lists the protocols your server supports.',
       example: 'example.com. 3600 IN HTTPS 1 . alpn=h3,h2',
+    },
+  },
+  'hsts-preload': {
+    pass: {
+      whatThisMeans:
+        'This name is on the HSTS Preload list built into Chrome, Firefox, Safari and Edge, either directly or through a parent domain that covers its subdomains. Browsers will only ever connect to it over HTTPS, even on the very first visit, so nobody on the network can downgrade a visitor to plain HTTP.',
+    },
+    warning: {
+      whatThisMeans:
+        'This name is not on the HSTS Preload list. A browser that has never visited it before may make its first connection over plain HTTP before your site redirects to HTTPS, and someone on the network can intercept that first request.',
+      howToFix:
+        'Serve every page over HTTPS and redirect HTTP to HTTPS. Then send the Strict-Transport-Security header from your domain (and every subdomain) with a max-age of at least one year, includeSubDomains and preload. Once it is in place, submit your domain to the Preload list. Only do this when every subdomain supports HTTPS: getting removed from the list takes months.',
+      example: 'Strict-Transport-Security: max-age=63072000; includeSubDomains; preload',
+      link: { label: 'Submit your domain at hstspreload.org', href: 'https://hstspreload.org/' },
     },
   },
 };
