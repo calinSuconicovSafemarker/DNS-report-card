@@ -89,6 +89,12 @@ export function App() {
         </p>
       )}
 
+      {(state.phase === 'not-found' || state.phase === 'dns-unreachable') && (
+        <p className={`notice ${state.phase}`} role="alert">
+          {state.message}
+        </p>
+      )}
+
       {(state.phase === 'running' || state.phase === 'done') && (
         <section className="report" aria-live="polite" aria-busy={state.phase === 'running'}>
           <div className="grade">

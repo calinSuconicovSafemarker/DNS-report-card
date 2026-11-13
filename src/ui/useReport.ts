@@ -6,6 +6,8 @@ import type { CheckId, CheckResult } from '../engine/types';
 export type ReportState =
   | { phase: 'idle' }
   | { phase: 'invalid-target'; message: string }
+  /** Report-level outcomes for a valid Hostname: no cards, no Grade. */
+  | { phase: 'not-found' | 'dns-unreachable'; hostname: string; message: string }
   | {
       phase: 'running' | 'done';
       hostname: string;
@@ -30,6 +32,11 @@ export function useReport(onHostname: (hostname: string) => void) {
         switch (event.type) {
           case 'invalid-target':
             setState({ phase: 'invalid-target', message: event.message });
+            break;
+          case 'not-found':
+          case 'dns-unreachable':
+            onHostname(event.hostname);
+            setState({ phase: event.type, hostname: event.hostname, message: event.message });
             break;
           case 'started':
             onHostname(event.hostname);

@@ -1,0 +1,1 @@
+{"Status":0,"TC":false,"RD":true,"RA":true,"AD":true,"CD":false,"Question":[{"name":"cloudflare.com.","type":6}],"Answer":[{"name":"cloudflare.com.","type":6,"TTL":300,"data":"ns3.cloudflare.com. dns.cloudflare.com. 2419984191 10000 2400 604800 300"}],"Comment":"Response from 2400:cb00:2049:1::a29f:30b."}

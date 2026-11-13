@@ -6,6 +6,7 @@ export const httpsRecordCheck: Check = {
   id: 'https-record',
   title: 'HTTPS record',
   weight: 10,
+  readsHostnameRecords: true,
   async run({ hostname, dns }): Promise<CheckResult> {
     const response = await dns.query(hostname, 'HTTPS');
     const records = response.answer.filter((r) => r.type === RecordType.HTTPS);

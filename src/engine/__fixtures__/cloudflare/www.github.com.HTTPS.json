@@ -1,0 +1,1 @@
+{"Status":0,"TC":false,"RD":true,"RA":true,"AD":false,"CD":false,"Question":[{"name":"www.github.com","type":65}],"Answer":[{"name":"www.github.com","type":5,"TTL":2771,"data":"github.com."}],"Authority":[{"name":"github.com","type":6,"TTL":71,"data":"ns-1707.awsdns-21.co.uk. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400"}]}
