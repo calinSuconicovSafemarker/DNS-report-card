@@ -1,16 +1,17 @@
-import { flagCaaMismatches } from './caaMismatch';
-import { isCertificateResult, type CertificateResult } from './checks/certificate';
-import { catalog, checks as registeredChecks } from './checks';
+import { catalog, checks as registeredChecks, refiners as registeredRefiners } from './checks';
 import { createDnsClient, DnsAnswerError, DnsUnreachableError } from './dns';
 import { gradeResults, type Grading } from './grade';
 import { aliasNote, findAlias, findZoneApex, lookupHostname } from './names';
 import { normalizeTarget, type TargetRejection } from './target';
-import type { Check, CheckContext, CheckId, CheckResult } from './types';
+import type { Check, CheckContext, CheckId, CheckResult, Refiner } from './types';
+import { COULDNT_CHECK_VERDICT } from './util';
 
 export interface ReportOptions {
   fetch: typeof fetch;
   /** The Check implementations to run. Defaults to the registry in `checks/index.ts`; tests supply stand-ins. */
   checks?: readonly Check[];
+  /** Cross-Check post-processing. Defaults to the registry in `checks/index.ts`. */
+  refiners?: readonly Refiner[];
   /**
    * Safety net: a Check that hasn't settled after this long becomes Couldn't check,
    * so no card spins forever. Each service also has its own, shorter timeout.
@@ -43,9 +44,9 @@ export type ReportEvent =
    */
   | { type: 'started'; hostname: string; checks: ReportCheck[] }
   /**
-   * One Check settled. The Certificate result can come a second time, replacing
-   * the first, when the CAA Check settles after it and flags issuers in its
-   * Issuance history (see `caaMismatch.ts`).
+   * One Check settled. A result can come again later, replacing the earlier
+   * one, when a Refiner adds to it once another Check settles (e.g. CAA
+   * mismatches in the Certificate's Issuance history, see `caaMismatch.ts`).
    */
   | { type: 'check'; result: CheckResult }
   /** Every Check settled. `grading` is null when no Check could be graded. */
@@ -107,29 +108,37 @@ export async function* runReport(target: string, options: ReportOptions): AsyncG
       runCheck(check, ctx, options.checkTimeoutMs ?? DEFAULT_CHECK_TIMEOUT_MS).then((result) => ({ i, result })),
     ]),
   );
-  const settled: { result: CheckResult; weight: number }[] = [];
-  let caa: CheckResult | undefined;
-  let certificate: CertificateResult | undefined;
+  const refiners = options.refiners ?? registeredRefiners;
+  const refine = (result: CheckResult, settled: ReadonlyMap<CheckId, CheckResult>) =>
+    refiners.reduce((r, refiner) => refiner(r, settled), result);
+  /** As each Check returned it. */
+  const raw = new Map<CheckId, CheckResult>();
+  /** As last sent. */
+  const sent = new Map<CheckId, CheckResult>();
   while (pending.size > 0) {
     const { i, result } = await Promise.race(pending.values());
     pending.delete(i);
-    settled.push({ result, weight: weightOf(checks[i].id) });
-    if (isCertificateResult(result)) {
-      certificate = caa ? flagCaaMismatches(result, caa) : result;
-      yield { type: 'check', result: certificate };
-      continue;
-    }
-    yield { type: 'check', result };
-    if (result.check === 'caa') {
-      caa = result;
-      if (certificate) {
-        const flagged = flagCaaMismatches(certificate, caa);
-        if (flagged.certificate.history.issuers.some((g) => g.caaMismatch)) yield { type: 'check', result: flagged };
-      }
+    raw.set(result.check, result);
+    const refined = refine(result, raw);
+    sent.set(result.check, refined);
+    yield { type: 'check', result: refined };
+    // The new result may add to those already sent: send any that changed again.
+    for (const [id, earlier] of sent) {
+      if (id === result.check) continue;
+      const again = refine(raw.get(id)!, raw);
+      if (sameResult(again, earlier)) continue;
+      sent.set(id, again);
+      yield { type: 'check', result: again };
     }
   }
 
+  const settled = [...sent.values()].map((result) => ({ result, weight: weightOf(result.check) }));
   yield { type: 'graded', grading: gradeResults(settled, catalog.length) };
+}
+
+/** Results are plain data; refiners rebuild objects, so compare by content. */
+function sameResult(a: CheckResult, b: CheckResult): boolean {
+  return a === b || JSON.stringify(a) === JSON.stringify(b);
 }
 
 /** A Check whose service doesn't answer becomes Couldn't check, never a Fail. */
@@ -149,7 +158,7 @@ async function runCheck(check: Check, ctx: CheckContext, timeoutMs: number): Pro
     return {
       check: check.id,
       status: 'couldnt-check',
-      verdict: 'Couldn’t check — no response from the service',
+      verdict: COULDNT_CHECK_VERDICT,
       checkedName: ctx.hostname,
       details:
         error instanceof DnsUnreachableError || error instanceof DnsAnswerError || error instanceof CheckTimeoutError

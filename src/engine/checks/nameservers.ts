@@ -1,5 +1,6 @@
 import { recordsOf } from '../dns';
 import type { Check, CheckResult, Detail } from '../types';
+import { plural, unique } from '../util';
 
 interface Nameserver {
   /** The nameserver's own name, e.g. `ns1.example.net`. */
@@ -89,12 +90,4 @@ function byAddress(a: string, b: string): number {
   const key = (n: string) => n.split(/[./]/).slice(0, 4).map(Number);
   const [x, y] = [key(a), key(b)];
   return x[0] - y[0] || x[1] - y[1] || x[2] - y[2] || x[3] - y[3];
-}
-
-function plural(n: number, word: string): string {
-  return `${n} ${word}${n === 1 ? '' : 's'}`;
-}
-
-function unique<T>(items: T[]): T[] {
-  return [...new Set(items)];
 }

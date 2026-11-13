@@ -1,4 +1,5 @@
-import type { Check, CheckId } from '../types';
+import { caaMismatchRefiner } from '../caaMismatch';
+import type { Check, CheckId, Refiner } from '../types';
 import { dnssecCheck } from './dnssec';
 import { caaCheck } from './caa';
 import { hstsPreloadCheck } from './hstsPreload';
@@ -41,3 +42,9 @@ export const catalog: readonly CheckInfo[] = [
  * `readsHostnameRecords: true` so the engine adds the Alias note to its card.
  */
 export const checks: readonly Check[] = [httpsRecordCheck, caaCheck, hstsPreloadCheck, nameserversCheck, dnssecCheck, certificateCheck];
+
+/**
+ * Cross-Check post-processing, applied by the Report engine to every settled
+ * result (see `Refiner`). The engine knows nothing about what each one does.
+ */
+export const refiners: readonly Refiner[] = [caaMismatchRefiner];

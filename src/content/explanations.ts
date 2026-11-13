@@ -1,4 +1,4 @@
-import type { CheckId, Status } from '../engine/types';
+import type { CheckId, CheckReason, CheckReasons, Status } from '../engine/types';
 
 /**
  * Explanation copy for each Check x Status, kept apart from the Check logic.
@@ -146,7 +146,7 @@ const explanations: Partial<Record<CheckId, CheckCopy>> = {
  * Copy for a Check result's `reason`, for a Status that covers several cases
  * (e.g. DNSSEC Fail: broken vs not enabled). Takes precedence over the Status copy.
  */
-const reasonExplanations: Partial<Record<CheckId, Record<string, Explanation>>> = {
+const reasonExplanations: { [C in keyof CheckReasons]?: Partial<Record<CheckReasons[C], Explanation>> } = {
   caa: {
     'no-ca-named': {
       whatThisMeans:
@@ -172,7 +172,9 @@ const reasonExplanations: Partial<Record<CheckId, Record<string, Explanation>>> 
   },
 };
 
-export function explanationFor(check: CheckId, status: Status, reason?: string): Explanation | undefined {
-  const forReason = reason === undefined ? undefined : reasonExplanations[check]?.[reason];
+export function explanationFor(check: CheckId, status: Status, reason?: CheckReason): Explanation | undefined {
+  const byReason: Partial<Record<CheckReason, Explanation>> | undefined =
+    check in reasonExplanations ? reasonExplanations[check as keyof CheckReasons] : undefined;
+  const forReason = reason === undefined ? undefined : byReason?.[reason];
   return forReason ?? explanations[check]?.[status] ?? (status === 'couldnt-check' ? couldntCheck : undefined);
 }

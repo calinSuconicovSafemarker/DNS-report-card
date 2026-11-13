@@ -1,5 +1,6 @@
 import { recordsOf, type DnsClient, type DnsRecord } from '../dns';
 import type { Check, CheckResult, Detail } from '../types';
+import { unique } from '../util';
 
 /**
  * The CAA policy that applies to the Hostname: the Relevant RRset of RFC 8659,
@@ -59,9 +60,9 @@ export const caaCheck: Check = {
     const issuewildValues = values('issuewild');
     const policy: CaaPolicy = {
       foundAt: found.name,
-      issue: unique(issueValues.map(issuerDomain).filter((d) => d !== '')),
-      issuewild: unique(issuewildValues.map(issuerDomain).filter((d) => d !== '')),
-      iodef: unique(values('iodef')),
+      issue: unique(issueValues.map(issuerDomain).filter((d) => d !== '')).sort(),
+      issuewild: unique(issuewildValues.map(issuerDomain).filter((d) => d !== '')).sort(),
+      iodef: unique(values('iodef')).sort(),
     };
     const restricts = issueValues.length + issuewildValues.length > 0;
     const inherited = found.name !== hostname;
@@ -135,8 +136,4 @@ function issuerDomain(value: string): string {
 
 function caList(domains: string[]): string {
   return domains.length > 0 ? domains.join(', ') : 'None (no CA may issue)';
-}
-
-function unique(items: string[]): string[] {
-  return [...new Set(items)].sort();
 }

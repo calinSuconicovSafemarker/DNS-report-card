@@ -6,6 +6,16 @@ export type CheckId = 'dnssec' | 'caa' | 'nameservers' | 'https-record' | 'certi
 
 export type Status = 'pass' | 'warning' | 'fail' | 'couldnt-check' | 'info';
 
+/**
+ * The cases of a Status, per Check, for Checks whose Status covers several
+ * (e.g. DNSSEC Fail: `broken` vs `none`). Each selects its own explanation copy.
+ */
+export interface CheckReasons {
+  dnssec: 'validated' | 'no-ds' | 'not-validated' | 'broken' | 'none';
+  caa: 'no-ca-named';
+}
+export type CheckReason = CheckReasons[keyof CheckReasons];
+
 export interface Detail {
   label: string;
   value: string;
@@ -22,7 +32,7 @@ export interface CheckResult {
   /** Raw data for technical users. */
   details: Detail[];
   /** Which case of the Status this is, when a Check has several (e.g. DNSSEC `broken` vs `none`). Selects the explanation copy. */
-  reason?: string;
+  reason?: CheckReason;
   /** Set by the Report engine when the Check read records on an Alias Hostname. */
   aliasNote?: string;
 }
@@ -41,6 +51,15 @@ export interface CheckContext {
    */
   zoneApex(): Promise<string>;
 }
+
+/**
+ * Cross-Check post-processing: refines one Check result using the results of
+ * other Checks that have settled (keyed by Check). Runs every time a Check
+ * settles, on every settled result. Returns `result` itself when it has
+ * nothing to add; any other object is sent as a replacement result.
+ * Must not change the Status (the Grade is computed from refined results).
+ */
+export type Refiner = (result: CheckResult, settled: ReadonlyMap<CheckId, CheckResult>) => CheckResult;
 
 /** An implemented Check. Its title and weight live in the catalog (`checks/index.ts`). */
 export interface Check {

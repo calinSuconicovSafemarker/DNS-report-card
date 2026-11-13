@@ -1,8 +1,8 @@
 import { recordsOf, type DnsRecord } from '../dns';
-import type { Check, CheckResult, Detail, Status } from '../types';
+import type { Check, CheckReasons, CheckResult, Detail, Status } from '../types';
 
 /** Which case of its Status a DNSSEC result is; selects the explanation copy. */
-export type DnssecReason = 'validated' | 'no-ds' | 'not-validated' | 'broken' | 'none';
+export type DnssecReason = CheckReasons['dnssec'];
 
 const NOERROR = 0;
 const SERVFAIL = 2;

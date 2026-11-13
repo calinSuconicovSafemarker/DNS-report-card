@@ -1,5 +1,6 @@
 import type { CaaMismatch } from '../caaMismatch';
 import type { Check, CheckResult, Detail } from '../types';
+import { COULDNT_CHECK_VERDICT, plural } from '../util';
 
 /** The public Certificate Transparency services, in the order they are asked (ADR 0002). */
 export type CertificateSource = 'Cert Spotter' | 'crt.sh';
@@ -112,7 +113,7 @@ export function createCertificateCheck(overrides: Partial<CertificateCheckOption
       return {
         check: 'certificate',
         status: 'couldnt-check',
-        verdict: 'Couldn’t check — no response from the service',
+        verdict: COULDNT_CHECK_VERDICT,
         checkedName: hostname,
         details: failures,
       };
@@ -290,8 +291,4 @@ function utc(timestamp: string): string {
 
 function formatUtc(iso: string): string {
   return `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC`;
-}
-
-function plural(n: number, word: string): string {
-  return `${n} ${word}${n === 1 ? '' : 's'}`;
 }

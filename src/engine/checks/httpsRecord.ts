@@ -1,5 +1,6 @@
 import { recordsOf } from '../dns';
 import type { Check, CheckResult } from '../types';
+import { unique } from '../util';
 
 /** HTTPS record (SVCB type 65) on the Hostname. Pass when present, Warning when absent, never Fail. */
 export const httpsRecordCheck: Check = {
@@ -47,8 +48,4 @@ function parseSvcParams(data: string): Map<string, string> {
       return [key, value];
     }),
   );
-}
-
-function unique<T>(items: T[]): T[] {
-  return [...new Set(items)];
 }
