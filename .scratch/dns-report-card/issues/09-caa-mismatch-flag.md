@@ -4,10 +4,10 @@
 
 **Blocked by:** 05, 07
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Each issuer in the timeline is matched against the allowed CAs from the CAA Check
-- [ ] Mismatched issuers carry a visible flag with a short plain-English explanation (CAA may have changed since issuance, or the issuance was unexpected)
-- [ ] No flags when there is no CAA set, or when the CAA Check was excluded
-- [ ] No effect on any Status, the Score or the Grade
-- [ ] Engine tests: all issuers allowed, one mismatched issuer, no CAA
+- [x] Each issuer in the timeline is matched against the allowed CAs from the CAA Check
+- [x] Mismatched issuers carry a visible flag with a short plain-English explanation (CAA may have changed since issuance, or the issuance was unexpected)
+- [x] No flags when there is no CAA set, or when the CAA Check was excluded
+- [x] No effect on any Status, the Score or the Grade
+- [x] Engine tests: all issuers allowed, one mismatched issuer, no CAA
